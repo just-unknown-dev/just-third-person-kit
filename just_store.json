@@ -1,0 +1,48 @@
+{
+  "category": "kits",
+  "dependencies": {
+    "just_game_engine_editor": "^0.1.0-dev.1"
+  },
+  "editor": {
+    "editorOnlyLibraries": [
+      "editor.dart",
+      "src/editor/"
+    ],
+    "modules": [
+      {
+        "class": "ThirdPersonModule",
+        "library": "package:just_third_person_kit/editor.dart",
+        "order": 15
+      }
+    ]
+  },
+  "id": "just_third_person_kit",
+  "kind": "kit",
+  "name": "Third Person Kit",
+  "requires": {
+    "just_game_engine": "^2.0.0"
+  },
+  "runtime": {
+    "componentTypes": [
+      "Checkpoint3D",
+      "KillZone3D",
+      "MovingPlatform3D",
+      "Pickup3D",
+      "ThirdPersonCamera",
+      "ThirdPersonController"
+    ],
+    "extensions": [
+      {
+        "const": "ThirdPersonKit.extension",
+        "library": "package:just_third_person_kit/just_third_person_kit.dart",
+        "order": 30
+      }
+    ],
+    "setup": {
+      "file": "lib/game/third_person_game.dart",
+      "snippet": "// The kit's characters are 3-D: EngineConfig(graphics3D: Graphics3D(),\n// physics3D: Physics3D()),\n// with Jolt built (pubspec: hooks: user_defines: just_jolt: build: true).\nThirdPersonKit.registerSystems(\n  engine.world,\n  input: engine.input,\n  camera: engine.cameraSystem.mainCamera,\n);"
+    }
+  },
+  "schema": 1,
+  "version": "0.1.0-dev.1"
+}
