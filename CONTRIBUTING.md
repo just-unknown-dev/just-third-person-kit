@@ -72,7 +72,7 @@ flutter test
 
 The package's `pubspec.yaml` turns the native Jolt build on (`hooks: user_defines: just_jolt: build: true`), so the first `flutter test` compiles Jolt and takes longer than the runs after it.
 
-If you're working from the Just engine monorepo, run every command from `packages/just_third_person_kit`.
+If you're working from the Just engine monorepo, run every command from `plugins/just_third_person_kit`.
 
 ---
 

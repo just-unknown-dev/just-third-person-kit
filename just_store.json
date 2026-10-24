@@ -1,8 +1,10 @@
 {
-  "category": "kits",
-  "dependencies": {
-    "just_game_engine_editor": "^0.1.0-dev.1"
+  "author": {
+    "name": "Just Unknown",
+    "url": "https://justunknown.com"
   },
+  "category": "kits",
+  "description": "A camera-relative character controller with coyote time and jump buffering, an orbit camera turned by look input, pickups, moving platforms, checkpoints and respawns, in 3-D.",
   "editor": {
     "editorOnlyLibraries": [
       "editor.dart",
@@ -18,9 +20,17 @@
   },
   "id": "just_third_person_kit",
   "kind": "kit",
+  "license": {
+    "file": "LICENSE",
+    "spdx": "BSD-3-Clause"
+  },
   "name": "Third Person Kit",
+  "previews": [
+    "store/card.png"
+  ],
   "requires": {
-    "just_game_engine": "^2.0.0"
+    "just_game_engine": "^2.0.0-dev.2",
+    "just_game_engine_editor": "^0.1.0-dev.1"
   },
   "runtime": {
     "componentTypes": [
@@ -44,5 +54,13 @@
     }
   },
   "schema": 1,
-  "version": "0.1.0-dev.1"
+  "stage": "beta",
+  "summary": "Third-person 3-D gameplay: a character, an orbit camera, pickups.",
+  "tags": [
+    "3d",
+    "third person",
+    "character",
+    "camera"
+  ],
+  "version": "0.1.0"
 }
