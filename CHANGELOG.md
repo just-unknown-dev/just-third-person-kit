@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0
+## 0.1.0-beta.1
 
 First version: third-person gameplay for just_game_engine in 3D.
 
@@ -21,3 +21,8 @@ First version: third-person gameplay for just_game_engine in 3D.
 - A jump from a crouch launches through the character's velocity: its body, made again at its new height, takes that step as in the air, which dropped `CharacterBody3D.jump`.
 - **Combat**: `ThirdPersonCombat` punches and kicks in chains read from a `.combos.json` (`ComboSet`, `Strike`): a press starts a chain, a press of the same button in a strike's combo window queues the next, and the strike otherwise ends in the guard, dropped after `guardTime` or on moving. `ThirdPersonCombatSystem` runs it (in `ThirdPersonKit.systems`), plays each strike on the animator trigger of its name, and fires `StrikeHit3DEvent` as each blow lands. A strike holds the controller still. Animator graphs read `striking` and `inCombat`.
 - The Player prefab's hero is JustHumanoid in the template: idle, walk, run, jump, crouch_idle and crouch_walk, combat_idle, and three punches and three kicks (`ThirdPersonModels.heroCombos`).
+- Pickups stand still while time does (a `deltaTime` of 0: paused, or an editor authoring the level), as the controller, the combat and the platforms do: a coin stays where, and turned as, it was placed, and spins from there once play starts.
+- A respawn puts the hero back on its feet with nothing of its fall, jump, crouch or strike carried over (no landing is told for the fall). The best checkpoint a hero has reached is kept with its controller, so a new play-test or level starts from none.
+- `ThirdPersonCameraSystem` makes its look reader as it joins a world and lets it go as it leaves, and turns the camera just before the camera brain, so a frame's look is in that frame's view.
+- The components' numbers have floors (no negative speeds, times or turn rates), and a combo set with a value of the wrong type is a `FormatException` naming it; its problems (`ComboSet.validate`) are said once as it loads.
+- The level aids read gravity from the scene's 3-D physics.

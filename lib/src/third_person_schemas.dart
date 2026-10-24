@@ -68,7 +68,7 @@ abstract final class ThirdPersonSchemas {
       _decimal<ThirdPersonController>('coyoteTime', (c) => c.coyoteTime, (c, v) => c.coyoteTime = v),
       _decimal<ThirdPersonController>('jumpBuffer', (c) => c.jumpBuffer, (c, v) => c.jumpBuffer = v),
       _decimal<ThirdPersonController>('turnSpeed', (c) => c.turnSpeed, (c, v) => c.turnSpeed = v),
-      _decimal<ThirdPersonController>('facingOffset', (c) => c.facingOffset, (c, v) => c.facingOffset = v),
+      _decimal<ThirdPersonController>('facingOffset', (c) => c.facingOffset, (c, v) => c.facingOffset = v, min: null),
       _decimal<ThirdPersonController>('fallLimit', (c) => c.fallLimit, (c, v) => c.fallLimit = v),
       _text<ThirdPersonController>('moveAction', (c) => c.moveAction, (c, v) => c.moveAction = v),
       _text<ThirdPersonController>('jumpAction', (c) => c.jumpAction, (c, v) => c.jumpAction = v),
@@ -152,9 +152,9 @@ abstract final class ThirdPersonSchemas {
         read: (c) => (c as Pickup3D).value,
         write: (c, v) => (c as Pickup3D).value = (v as num).toInt(),
       ),
-      _decimal<Pickup3D>('spinSpeed', (c) => c.spinSpeed, (c, v) => c.spinSpeed = v),
+      _decimal<Pickup3D>('spinSpeed', (c) => c.spinSpeed, (c, v) => c.spinSpeed = v, min: null),
       _decimal<Pickup3D>('bobHeight', (c) => c.bobHeight, (c, v) => c.bobHeight = v),
-      _decimal<Pickup3D>('bobSpeed', (c) => c.bobSpeed, (c, v) => c.bobSpeed = v),
+      _decimal<Pickup3D>('bobSpeed', (c) => c.bobSpeed, (c, v) => c.bobSpeed = v, min: null),
     ],
   );
 
@@ -220,15 +220,20 @@ abstract final class ThirdPersonSchemas {
     fields: const [],
   );
 
+  /// A number field, never below [min] — 0 unless said: a negative speed,
+  /// time or turn rate makes no sense here (a negative turn speed spun the
+  /// hero forever). Null for none (an angle, a spin's direction).
   static SchemaField _decimal<T extends Component>(
     String name,
     double Function(T c) read,
-    void Function(T c, double v) write,
-  ) => SchemaField(
+    void Function(T c, double v) write, {
+    double? min = 0,
+  }) => SchemaField(
     name: name,
     kind: FieldTypes.decimal,
     read: (c) => read(c as T),
     write: (c, v) => write(c as T, (v as num).toDouble()),
+    min: min,
   );
 
   static SchemaField _bool<T extends Component>(

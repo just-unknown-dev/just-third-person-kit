@@ -236,7 +236,8 @@ class ThirdPersonCamera extends Component {
 }
 
 /// Something to collect: a sensor that, touched by a player, disappears and
-/// counts [value]. It spins and bobs to be seen.
+/// counts [value]. It spins (about the up axis, from the way it was placed)
+/// and bobs to be seen, while the game runs.
 class Pickup3D extends Component {
   /// A pickup worth [value].
   Pickup3D({this.value = 1, this.spinSpeed = 2, this.bobHeight = 0.15, this.bobSpeed = 2});
@@ -255,6 +256,7 @@ class Pickup3D extends Component {
 
   // Runtime.
   Vector3? _home;
+  Quaternion? _homeRotation;
   double _time = 0;
   bool _collected = false;
 
@@ -312,6 +314,10 @@ extension PickupRuntime on Pickup3D {
   /// Where it bobs about.
   Vector3? get home => _home;
   set home(Vector3? v) => _home = v;
+
+  /// The way it was placed, which it spins from.
+  Quaternion? get homeRotation => _homeRotation;
+  set homeRotation(Quaternion? v) => _homeRotation = v;
 
   /// Seconds it has been bobbing.
   double get time => _time;

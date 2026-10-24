@@ -2,6 +2,8 @@
 
 Third-person gameplay for `just_game_engine` in 3D, drawn by its 3-D graphics (`package:just_game_engine/graphics_3d.dart`) on its 3-D physics (`package:just_game_engine/physics_3d.dart`, Jolt). The app's pubspec builds Jolt with `hooks: user_defines: just_jolt: build: true`.
 
+It runs where the engine's 3-D does: Windows, macOS, Linux, Android and iOS. Not the web, where Flutter GPU and Jolt are not available: a game with `EngineConfig(physics3D: Physics3D())` stops at start there.
+
 ```dart
 final engine = Engine(config: EngineConfig(
   extensions: [ThirdPersonKit.extension],

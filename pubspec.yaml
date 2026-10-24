@@ -1,12 +1,14 @@
 name: just_third_person_kit
 description: "Third-person gameplay for just_game_engine in 3D: a camera-relative character controller with coyote time and jump buffering, an orbit camera turned by look input, pickups, moving platforms, checkpoints and respawns."
-version: 0.1.0
+version: 0.1.0-beta.1
 publish_to: none
 homepage: https://engine.justunknown.com/
 
 environment:
   sdk: ^3.12.2
-  flutter: ">=3.41.0"
+  # just_game_engine and just_editor_core need Flutter GPU as it is from
+  # 3.47.1.
+  flutter: ">=3.47.1"
 
 dependencies:
   flutter:

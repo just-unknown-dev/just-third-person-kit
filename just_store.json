@@ -4,7 +4,7 @@
     "url": "https://justunknown.com"
   },
   "category": "kits",
-  "description": "A camera-relative character controller with coyote time and jump buffering, an orbit camera turned by look input, pickups, moving platforms, checkpoints and respawns, in 3-D.",
+  "description": "A camera-relative character controller with coyote time and jump buffering, an orbit camera turned by look input, pickups, moving platforms, checkpoints and respawns, in 3-D: on Windows, macOS, Linux, Android and iOS (3-D does not run on the web).",
   "editor": {
     "editorOnlyLibraries": [
       "editor.dart",
@@ -39,6 +39,7 @@
       "MovingPlatform3D",
       "Pickup3D",
       "ThirdPersonCamera",
+      "ThirdPersonCombat",
       "ThirdPersonController"
     ],
     "extensions": [
@@ -62,5 +63,5 @@
     "character",
     "camera"
   ],
-  "version": "0.1.0"
+  "version": "0.1.0-beta.1"
 }

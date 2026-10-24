@@ -46,7 +46,17 @@ final class Strike {
   }
 
   /// Reads one entry of a `.combos.json`'s `strikes`, called [name].
+  /// Throws a [FormatException] naming the strike when a value has the wrong
+  /// type (`"duration": "0.5"`).
   factory Strike.fromJson(String name, Map<String, dynamic> json) {
+    try {
+      return Strike._fromJson(name, json);
+    } on TypeError catch (e) {
+      throw FormatException('Strike "$name": a value has the wrong type ($e).');
+    }
+  }
+
+  factory Strike._fromJson(String name, Map<String, dynamic> json) {
     final window = json['combo_window'];
     return Strike(
       name: name,
@@ -113,8 +123,17 @@ final class ComboSet {
 
   /// Reads a `.combos.json`: `guard`, `chains` (name to strike names) and
   /// `strikes` (name to `duration`, `hit`, `combo_window`, `next`, `then`,
-  /// `move`, `limb`), times in seconds. Missing parts are empty.
-  factory ComboSet.fromJson(Map<String, dynamic> json) => ComboSet(
+  /// `move`, `limb`), times in seconds. Missing parts are empty. Throws a
+  /// [FormatException] saying what has the wrong type.
+  factory ComboSet.fromJson(Map<String, dynamic> json) {
+    try {
+      return ComboSet._fromJson(json);
+    } on TypeError catch (e) {
+      throw FormatException('A combo set has a value of the wrong type ($e).');
+    }
+  }
+
+  factory ComboSet._fromJson(Map<String, dynamic> json) => ComboSet(
     guard: json['guard'] as String? ?? '',
     chains: {
       for (final MapEntry(:key, :value) in ((json['chains'] as Map?) ?? const {}).entries)

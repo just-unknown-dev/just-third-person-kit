@@ -120,7 +120,10 @@ class ThirdPersonControllerSystem extends System {
   @override
   void update(double deltaTime) {
     if (deltaTime <= 0) return;
-    final (forward, right) = groundAxesOf(cameraYaw());
+    // The camera's ground axes ([groundAxesOf]): forward (sin, 0, cos),
+    // right (cos, 0, -sin) — as numbers, so a step allocates nothing.
+    final yaw = cameraYaw();
+    final sinYaw = math.sin(yaw), cosYaw = math.cos(yaw);
     for (final entity in entities) {
       if (!entity.isActive) continue;
       final transform = entity.getComponent<TransformComponent>()!;
@@ -166,8 +169,8 @@ class ThirdPersonControllerSystem extends System {
           : input.isDown(c.sprintAction)
           ? c.sprintSpeed
           : c.walkSpeed;
-      final wantX = (right.x * stick.dx - forward.x * stick.dy) * speed;
-      final wantZ = (right.z * stick.dx - forward.z * stick.dy) * speed;
+      final wantX = (cosYaw * stick.dx - sinYaw * stick.dy) * speed;
+      final wantZ = (-sinYaw * stick.dx - cosYaw * stick.dy) * speed;
       final rate = (c.isGrounded ? c.acceleration : c.airAcceleration) * deltaTime;
       final v = c.planarVelocity;
       final dx = wantX - v.x, dz = wantZ - v.z;
@@ -217,7 +220,8 @@ class ThirdPersonControllerSystem extends System {
         delta = (delta + math.pi) % (2 * math.pi) - math.pi;
         final step = c.turnSpeed * deltaTime;
         c.facing += delta.abs() <= step ? delta : step * delta.sign;
-        transform.setRotation(Quaternion.axisAngle(Vector3(0, 1, 0), c.facing + c.facingOffset));
+        _turn.setAxisAngle(0, 1, 0, c.facing + c.facingOffset);
+        transform.setRotation(_turn);
       }
     }
   }
@@ -274,12 +278,14 @@ class ThirdPersonControllerSystem extends System {
     if (queries == null) return false;
     final feet = entity.getComponent<TransformComponent>()!.position;
     final radius = character.radius * 0.9;
-    final head = Vector3(feet.x, feet.y - (character.height - character.radius), feet.z);
+    final head = _head..setValues(feet.x, feet.y - (character.height - character.radius), feet.z);
     final hit = queries.sphereCast(head, radius, _up, maxDistance: rise + character.radius - radius, ignore: entity);
     return hit != null;
   }
 
   static final Vector3 _up = Vector3(0, -1, 0);
+  static final Quaternion _turn = Quaternion.identity();
+  static final Vector3 _head = Vector3.zero();
   Physics3DQueries? _physicsQueries;
 
   /// Queries on the world's 3-D physics, or null without it.
@@ -413,7 +419,15 @@ class ThirdPersonCombatSystem extends System {
     if (path.isEmpty) return null;
     final known = _sets[path];
     if (known != null || _loading.containsKey(path)) return known;
-    _loading[path] = (loader ?? _fromBundle)(path).then((set) => _sets[path] = set).catchError((Object error) {
+    _loading[path] = (loader ?? _fromBundle)(path).then((set) {
+      // A strike with no duration ends at once, one that lands past its end
+      // never lands: said once, as the set loads.
+      final problems = set.validate();
+      if (problems.isNotEmpty) {
+        debugPrint('ThirdPersonCombatSystem: "$path": ${problems.join(' ')}');
+      }
+      return _sets[path] = set;
+    }).catchError((Object error) {
       // Not tried again; said once.
       debugPrint('ThirdPersonCombatSystem: "$path" could not be loaded; its strikes do nothing. $error');
       return const ComboSet();
@@ -426,24 +440,49 @@ class ThirdPersonCombatSystem extends System {
 
 /// Turns and zooms [ThirdPersonCamera] cameras from the look and zoom
 /// actions, once per rendered frame, so the view is smooth at any rate.
+///
+/// It runs just before the camera brain ([SystemPriorities.camera] + 1), so
+/// a frame's look is in the view that frame is drawn with.
 class ThirdPersonCameraSystem extends System implements FrameSystem {
-  /// A system reading looks through [look] and zoom through [actions].
-  ThirdPersonCameraSystem({required this.look, required this.actions});
+  /// A system reading looks and zoom through [actions]. Its [look] reader
+  /// is made when it joins a world and let go when it leaves.
+  ThirdPersonCameraSystem({required this.actions});
 
-  /// The look actions' reader (the mouse's movement and the stick's rate).
-  final LookInput look;
-
-  /// Where the zoom axis is read.
+  /// Where the look and zoom actions are read.
   final InputActions actions;
+
+  /// The look actions' reader (the mouse's movement and the stick's rate),
+  /// while the system is in a world; null otherwise. It listens to the input
+  /// service, so it exists only while it is used.
+  LookInput? get look => _look;
+  LookInput? _look;
+
+  @override
+  int get priority => SystemPriorities.camera + 1;
 
   @override
   List<Type> get requiredComponents => const [OrbitFollowComponent, ThirdPersonCamera];
+
+  @override
+  void onAddedToWorld() {
+    super.onAddedToWorld();
+    _look ??= LookInput(actions);
+  }
+
+  @override
+  void onRemovedFromWorld() {
+    _look?.dispose();
+    _look = null;
+    super.onRemovedFromWorld();
+  }
 
   @override
   void update(double deltaTime) {}
 
   @override
   void frame(double deltaTime, double alpha) {
+    final look = _look;
+    if (look == null) return;
     final turn = look.read(deltaTime);
     for (final entity in entities) {
       if (!entity.isActive) continue;
@@ -470,6 +509,10 @@ class ThirdPersonCameraSystem extends System implements FrameSystem {
 
 /// Spins and bobs pickups, and hands one to the player whose character
 /// touches it.
+///
+/// The spin and bob stand still while time does (a `deltaTime` of 0: paused,
+/// or an editor authoring the level), so a pickup stays where — and turned
+/// the way — it was placed, and starts from there when play does.
 class Pickup3DSystem extends System {
   /// The system; it listens on the world's events once added.
   Pickup3DSystem();
@@ -508,16 +551,30 @@ class Pickup3DSystem extends System {
       world.destroyEntity(pickup);
     }
     _touched.clear();
+    if (deltaTime <= 0) return;
     for (final entity in entities) {
       if (!entity.isActive) continue;
       final p = entity.getComponent<Pickup3D>()!;
       final t = entity.getComponent<TransformComponent>()!;
       final home = p.home ??= Vector3.copy(t.position);
+      final placed = p.homeRotation ??= _rotationOf(t);
       p.time += deltaTime;
       t.position.setValues(home.x, home.y - math.sin(p.time * p.bobSpeed) * p.bobHeight, home.z);
-      t.setRotation(Quaternion.axisAngle(Vector3(0, 1, 0), p.time * p.spinSpeed));
+      // Its spin about the up axis, after the way it was placed.
+      _spin
+        ..setAxisAngle(0, 1, 0, p.time * p.spinSpeed)
+        ..multiply(placed);
+      t.setRotation(_spin);
     }
   }
+
+  static Quaternion _rotationOf(TransformComponent t) {
+    final q = Quaternion.identity();
+    t.rotationInto(q);
+    return q;
+  }
+
+  static final Quaternion _spin = Quaternion.identity();
 }
 
 /// Moves [MovingPlatform3D] platforms there and back; before physics, so a
@@ -590,17 +647,20 @@ class Respawn3DSystem extends System {
     super.onRemovedFromWorld();
   }
 
+  /// Players to put back this step; kept, so a step allocates nothing.
+  final Set<Entity> _reset = {};
+
   @override
   void update(double deltaTime) {
-    final reset = <Entity>{};
+    final reset = _reset..clear();
     for (final (sensor, player) in _sensed) {
       final controller = player.getComponent<ThirdPersonController>();
       if (controller == null || !player.isAlive) continue;
       final checkpoint = sensor.getComponent<Checkpoint3D>();
       if (checkpoint != null) {
-        final best = _best[player];
+        final best = _best[controller];
         if (best == null || checkpoint.order >= best) {
-          _best[player] = checkpoint.order;
+          _best[controller] = checkpoint.order;
           final at = sensor.getComponent<TransformComponent>()?.position;
           if (at != null) controller.spawnPoint = Vector3.copy(at);
           if (!checkpoint.reached) {
@@ -622,9 +682,14 @@ class Respawn3DSystem extends System {
     }
   }
 
-  final Map<Entity, int> _best = {};
+  /// The highest checkpoint order each hero has reached, kept by its
+  /// controller: a play-test stopped (which puts back fresh components) or a
+  /// level loaded starts from none, and nothing is kept for heroes gone.
+  final Expando<int> _best = Expando('bestCheckpoint');
 
-  /// Puts [player] back at its spawn point, still, and says so.
+  /// Puts [player] back at its spawn point, still, and says so: on its feet,
+  /// with nothing of the fall, jump or strike it was in carried over — no
+  /// landing is told for the fall, and a jump pressed before is not taken.
   void respawn(Entity player) {
     final c = player.getComponent<ThirdPersonController>()!;
     final t = player.getComponent<TransformComponent>()!;
@@ -639,6 +704,21 @@ class Respawn3DSystem extends System {
       character
         ..moveVelocity.setZero()
         ..velocity.setZero();
+      // Stood up: the spawn point is where it stood before.
+      final standing = c.standingHeight;
+      if (standing != null) character.height = standing;
+    }
+    c
+      ..standingHeight = null
+      ..isCrouching = false
+      ..isJumping = false
+      ..windUp = null
+      ..sincePressed = double.infinity
+      ..airTime = 0
+      ..fallSpeed = 0;
+    final combat = player.getComponent<ThirdPersonCombat>();
+    if (combat != null && combat.inCombat) {
+      ThirdPersonCombatSystem._end(player, combat, guard: 0);
     }
     world.events.fire(Respawned3DEvent(player, Vector3.copy(at)));
   }

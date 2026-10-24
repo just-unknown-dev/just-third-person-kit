@@ -15,8 +15,19 @@ import '../third_person_components.dart';
 final class ThirdPersonAids extends LevelAids {
   const ThirdPersonAids();
 
-  /// Gravity, as the 3-D physics has it by default (m/s²).
+  /// Gravity, as the 3-D physics has it by default (m/s²): what the aids
+  /// use while the world has no 3-D physics of its own yet.
   static const double gravity = 9.81;
+
+  /// How hard [world]'s 3-D physics pulls down (m/s²): its own gravity once
+  /// it has a physics world, [gravity] before.
+  static double gravityOf(World world) {
+    final system = world.getSystem<PhysicsSystem3D>();
+    if (system == null || !system.hasWorld) return gravity;
+    final g = system.physics.gravity;
+    // +Y is down.
+    return g.y > 0 ? g.y : g.length;
+  }
 
   /// The level's hero: the entity with a [ThirdPersonController].
   static Entity? heroOf(World world) {
@@ -33,7 +44,7 @@ final class ThirdPersonAids extends LevelAids {
     final body = hero?.getComponent<CharacterBody3D>() ?? CharacterBody3D();
     return MovementProfile(
       jumpSpeed: controller.jumpSpeed,
-      gravity: gravity * (body.useGravity ? body.gravityScale : 0),
+      gravity: gravityOf(world) * (body.useGravity ? body.gravityScale : 0),
       runSpeed: controller.sprintSpeed,
       maxSlopeDegrees: body.maxSlopeAngle * 180 / math.pi,
       stepHeight: body.stepHeight,
@@ -45,9 +56,12 @@ final class ThirdPersonAids extends LevelAids {
     final hero = heroOf(world);
     final controller = hero?.getComponent<ThirdPersonController>();
     if (controller == null) return null;
-    // Where it starts: its spawn point when it has one, else where it is.
-    final spawn = SpawnPoints.of(world, 'player').firstOrNull ?? hero;
-    final at = spawn?.getComponent<TransformComponent>()?.position;
+    // Measured as `Respawn3DSystem` measures it, from where the hero is put
+    // back: its spawn point once it has one (in play); else the level's
+    // player spawn point, where a spawner would put it; else where it stands.
+    final at =
+        controller.spawnPoint ??
+        (SpawnPoints.of(world, 'player').firstOrNull ?? hero)?.getComponent<TransformComponent>()?.position;
     return at == null ? null : at.y + controller.fallLimit;
   }
 

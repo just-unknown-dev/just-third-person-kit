@@ -55,7 +55,9 @@ abstract final class ThirdPersonKit {
       ThirdPersonControllerSystem(cameraYaw: () => camera.yaw),
       MovingPlatform3DSystem(),
       Pickup3DSystem(),
-      ThirdPersonCameraSystem(look: LookInput(actions), actions: actions),
+      // Its look reader is made as it joins the world: a list made only to
+      // see what is missing (after a hot reload) leaves nothing listening.
+      ThirdPersonCameraSystem(actions: actions),
     ];
   }
 

@@ -97,7 +97,10 @@ void main() {
       for (final m in import.allMatches(File(path).readAsStringSync())) {
         final uri = m.group(1)!;
         expect(uri, isNot(contains('just_game_engine_editor')), reason: '$path imports $uri');
+        expect(uri, isNot(contains('just_editor_core')), reason: '$path imports $uri');
         expect(uri, isNot(contains('just_graphics_engine')), reason: '$path imports $uri');
+        expect(uri, isNot(startsWith('package:flutter_test')), reason: '$path imports $uri');
+        expect(uri, isNot('dart:io'), reason: '$path imports $uri');
         if (!uri.contains(':')) pending.add(Uri.parse(path).resolve(uri).path);
       }
     }
