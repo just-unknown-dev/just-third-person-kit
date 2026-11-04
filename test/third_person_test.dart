@@ -7,7 +7,7 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_game_engine/just_game_engine.dart';
-import 'package:just_game_engine/physics_3d.dart';
+import 'package:just_game_engine/just_game_engine_3d.dart';
 import 'package:just_third_person_kit/just_third_person_kit.dart';
 
 const _dt = 1 / 60;
@@ -38,16 +38,16 @@ void main() {
 
   group('the controller', () {
     late Entity hero;
-    late CharacterBody3D body;
-    late ThirdPersonController control;
+    late CharacterBody3DComponent body;
+    late ThirdPersonControllerComponent control;
     late InputComponent input;
     var yaw = 0.0;
 
     setUp(() {
       yaw = 0;
       world.addSystem(ThirdPersonControllerSystem(cameraYaw: () => yaw));
-      body = CharacterBody3D()..groundState = GroundState3D.onGround;
-      control = ThirdPersonController();
+      body = CharacterBody3DComponent()..groundState = Ground3DState.onGround;
+      control = ThirdPersonControllerComponent();
       input = InputComponent();
       hero = world.createEntityWithComponents([TransformComponent(), body, control, input], name: 'Hero');
     });
@@ -102,7 +102,7 @@ void main() {
 
     test('just off an edge, a jump still works (coyote time); later it does not', () {
       step();
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step(frames: 3); // 0.05 s
       input.pressed.add('jump');
       step();
@@ -111,9 +111,9 @@ void main() {
       // Again, but too late.
       control.isJumping = false;
       body.velocity.setZero();
-      body.groundState = GroundState3D.onGround;
+      body.groundState = Ground3DState.onGround;
       step();
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step(frames: 20); // 0.33 s
       input.pressed.add('jump');
       step();
@@ -133,7 +133,7 @@ void main() {
       input.pressed.add('jump');
       step();
       expect(jumped, [hero]);
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       body.velocity.y = -6; // rising (up is -Y)
       step(frames: 5);
       body.velocity.y = 7.5; // and falling
@@ -141,7 +141,7 @@ void main() {
       body.velocity.y = 3;
       step();
       expect(landed, isEmpty, reason: 'still in the air');
-      body.groundState = GroundState3D.onGround;
+      body.groundState = Ground3DState.onGround;
       step();
       expect(landed, [(hero, 7.5)], reason: 'the fastest it fell');
       step(frames: 3);
@@ -149,12 +149,12 @@ void main() {
     });
 
     test('a jump pressed just before landing happens on landing (buffer)', () {
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step(frames: 30);
       input.pressed.add('jump');
       step(frames: 3);
       expect(body.pendingJump, isNull, reason: 'still in the air');
-      body.groundState = GroundState3D.onGround;
+      body.groundState = Ground3DState.onGround;
       step();
       expect(body.pendingJump, control.jumpSpeed);
     });
@@ -187,10 +187,10 @@ void main() {
       // as in the air: the jump goes as its speed, not to the ground.
       expect(body.velocity.y, -control.jumpSpeed);
       expect(body.pendingJump, isNull);
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step(frames: 10);
       expect(control.isCrouching, isFalse);
-      body.groundState = GroundState3D.onGround;
+      body.groundState = Ground3DState.onGround;
       body.velocity.setZero();
       step();
       expect(control.isCrouching, isTrue, reason: 'crouch still held');
@@ -244,7 +244,7 @@ void main() {
       step();
       input.pressed.add('jump');
       step(frames: 3);
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step();
       expect(body.velocity.y, -control.jumpSpeed, reason: 'the ground went from under it');
       expect(control.windUp, isNull);
@@ -254,7 +254,7 @@ void main() {
       step(frames: 30);
       input.pressed.add('jump');
       step(frames: 3);
-      body.groundState = GroundState3D.onGround;
+      body.groundState = Ground3DState.onGround;
       step();
       expect(control.isJumping, isFalse, reason: 'landed');
       expect(control.windUp, isNull);
@@ -267,7 +267,7 @@ void main() {
         ..isJumping = false
         ..windUp = null;
       step();
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step(frames: 3);
       input.pressed.add('jump');
       step();
@@ -285,7 +285,7 @@ void main() {
 
   test("the camera's look turns the orbit; down looks down, clamped", () {
     final orbit = OrbitFollowComponent(yaw: 0, pitch: -0.3, minPitch: -1, maxPitch: 0.5);
-    final camera = ThirdPersonCamera(sensitivity: 2);
+    final camera = ThirdPersonCameraComponent(sensitivity: 2);
     ThirdPersonCameraSystem.applyLook(orbit, camera, const Offset(0.1, 0.05));
     expect(orbit.yaw, closeTo(0.2, 1e-9));
     expect(orbit.pitch, closeTo(-0.4, 1e-9));
@@ -297,8 +297,8 @@ void main() {
 
   test('a pickup touched by a player is taken, counted and gone; it bobs till then', () {
     world.addSystem(Pickup3DSystem());
-    final player = world.createEntityWithComponents([TransformComponent(), ThirdPersonController()], name: 'Hero');
-    final coin = world.createEntityWithComponents([TransformComponent(position: Vector3(0, -1, 3)), Pickup3D(value: 5)], name: 'Coin');
+    final player = world.createEntityWithComponents([TransformComponent(), ThirdPersonControllerComponent()], name: 'Hero');
+    final coin = world.createEntityWithComponents([TransformComponent(position: Vector3(0, -1, 3)), Pickup3DComponent(value: 5)], name: 'Coin');
     world.update(0.25);
     expect(coin.getComponent<TransformComponent>()!.position.y, isNot(-1), reason: 'bobbing');
     final taken = <PickupCollected3DEvent>[];
@@ -318,7 +318,7 @@ void main() {
     world.addSystem(MovingPlatform3DSystem());
     final lift = world.createEntityWithComponents([
       TransformComponent(position: Vector3(1, 0, 0)),
-      MovingPlatform3D(travel: Vector3(4, 0, 0), speed: 2, wait: 0.5),
+      MovingPlatform3DComponent(travel: Vector3(4, 0, 0), speed: 2, wait: 0.5),
     ]);
     double x() => lift.getComponent<TransformComponent>()!.position.x;
     for (var i = 0; i < 60; i++) {
@@ -343,8 +343,8 @@ void main() {
       world.addSystem(Respawn3DSystem());
       hero = world.createEntityWithComponents([
         TransformComponent(position: Vector3(0, 0, 0)),
-        ThirdPersonController(fallLimit: 10)..spawnPoint = Vector3.zero(),
-        CharacterBody3D(),
+        ThirdPersonControllerComponent(fallLimit: 10)..spawnPoint = Vector3.zero(),
+        CharacterBody3DComponent(),
       ], name: 'Hero');
       respawned = [];
       world.events.on<Respawned3DEvent>(respawned.add);
@@ -354,24 +354,24 @@ void main() {
 
     test('falling past the limit puts it back, still', () {
       at().setValues(3, 12, 1);
-      hero.getComponent<CharacterBody3D>()!.velocity.setValues(0, 20, 0);
+      hero.getComponent<CharacterBody3DComponent>()!.velocity.setValues(0, 20, 0);
       world.update(_dt);
       expect([at().x, at().y, at().z], [0, 0, 0]);
-      expect(hero.getComponent<CharacterBody3D>()!.velocity.y, 0);
+      expect(hero.getComponent<CharacterBody3DComponent>()!.velocity.y, 0);
       expect(respawned, hasLength(1));
     });
 
     test('a checkpoint moves the spawn; an earlier one does not move it back; a kill zone sends it there', () {
-      final first = world.createEntityWithComponents([TransformComponent(position: Vector3(5, 0, 0)), Checkpoint3D(order: 1)]);
-      final second = world.createEntityWithComponents([TransformComponent(position: Vector3(9, 0, 0)), Checkpoint3D(order: 2)]);
-      final pit = world.createEntityWithComponents([TransformComponent(), KillZone3D()]);
+      final first = world.createEntityWithComponents([TransformComponent(position: Vector3(5, 0, 0)), Checkpoint3DComponent(order: 1)]);
+      final second = world.createEntityWithComponents([TransformComponent(position: Vector3(9, 0, 0)), Checkpoint3DComponent(order: 2)]);
+      final pit = world.createEntityWithComponents([TransformComponent(), KillZone3DComponent()]);
       final reached = <CheckpointReached3DEvent>[];
       world.events.on<CheckpointReached3DEvent>(reached.add);
       world.events.fire(SensorEnter3DEvent(sensor: second, other: hero));
       world.update(_dt);
       world.events.fire(SensorEnter3DEvent(sensor: first, other: hero));
       world.update(_dt);
-      expect(hero.getComponent<ThirdPersonController>()!.spawnPoint!.x, 9);
+      expect(hero.getComponent<ThirdPersonControllerComponent>()!.spawnPoint!.x, 9);
       expect(reached.map((e) => e.checkpoint), [second]);
       at().setValues(20, 0, 0);
       world.events.fire(SensorEnter3DEvent(sensor: pit, other: hero));
@@ -383,9 +383,9 @@ void main() {
 
   group('combat', () {
     late Entity hero;
-    late CharacterBody3D body;
-    late ThirdPersonController control;
-    late ThirdPersonCombat combat;
+    late CharacterBody3DComponent body;
+    late ThirdPersonControllerComponent control;
+    late ThirdPersonCombatComponent combat;
     late AnimatorComponent animator;
     late InputComponent input;
     late List<StrikeHit3DEvent> hits;
@@ -394,9 +394,9 @@ void main() {
       world
         ..addSystem(ThirdPersonCombatSystem(loader: (_) async => _combos))
         ..addSystem(ThirdPersonControllerSystem(cameraYaw: () => 0));
-      body = CharacterBody3D()..groundState = GroundState3D.onGround;
-      control = ThirdPersonController();
-      combat = ThirdPersonCombat(combosPath: 'hero.combos.json', guardTime: 1);
+      body = CharacterBody3DComponent()..groundState = Ground3DState.onGround;
+      control = ThirdPersonControllerComponent();
+      combat = ThirdPersonCombatComponent(combosPath: 'hero.combos.json', guardTime: 1);
       animator = AnimatorComponent();
       input = InputComponent();
       hero = world.createEntityWithComponents([TransformComponent(), body, control, combat, animator, input], name: 'Hero');
@@ -516,13 +516,13 @@ void main() {
     });
 
     test('no strike in the air, crouched or winding up a jump; off the ground mid-strike, it ends', () {
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step();
       input.pressed.add('punch');
       step();
       expect(combat.isStriking, isFalse);
 
-      body.groundState = GroundState3D.onGround;
+      body.groundState = Ground3DState.onGround;
       input.setDown('crouch', true);
       step();
       input.pressed.add('punch');
@@ -548,7 +548,7 @@ void main() {
       input.pressed.add('punch');
       step();
       expect(combat.isStriking, isTrue);
-      body.groundState = GroundState3D.inAir;
+      body.groundState = Ground3DState.inAir;
       step();
       expect((combat.isStriking, combat.inCombat), (false, false));
     });
@@ -610,14 +610,14 @@ void main() {
   test('the extension installs the components and the animator bindings', () {
     final context = EngineContext();
     ThirdPersonKit.extension.install(context);
-    for (final c in [ThirdPersonController(), ThirdPersonCombat(), ThirdPersonCamera(), Pickup3D(), MovingPlatform3D(), Checkpoint3D(), KillZone3D()]) {
+    for (final c in [ThirdPersonControllerComponent(), ThirdPersonCombatComponent(), ThirdPersonCameraComponent(), Pickup3DComponent(), MovingPlatform3DComponent(), Checkpoint3DComponent(), KillZone3DComponent()]) {
       final d = context.definitions.definitionFor(c);
       expect(d, isNotNull, reason: '${c.runtimeType}');
       expect(d!.hints.dimensions, Dimensions.threeD);
     }
     final w = World(context: context)..initialize();
     addTearDown(w.dispose);
-    final control = ThirdPersonController()..planarVelocity.setValues(3, 0, 4);
+    final control = ThirdPersonControllerComponent()..planarVelocity.setValues(3, 0, 4);
     final hero = w.createEntityWithComponents([control]);
     expect(context.animatorBindings.of('planarSpeed')!(hero), 5);
     expect(context.animatorBindings.of('grounded')!(hero), isFalse);
@@ -626,8 +626,8 @@ void main() {
     expect(context.animatorBindings.of('crouching')!(hero), isTrue);
     expect(context.animatorBindings.of('striking')!(hero), isNull, reason: 'no combat');
 
-    final combat = ThirdPersonCombat();
-    final fighter = w.createEntityWithComponents([ThirdPersonController(), combat]);
+    final combat = ThirdPersonCombatComponent();
+    final fighter = w.createEntityWithComponents([ThirdPersonControllerComponent(), combat]);
     expect(context.animatorBindings.of('striking')!(fighter), isFalse);
     expect(context.animatorBindings.of('inCombat')!(fighter), isFalse);
     combat.guardLeft = 1;

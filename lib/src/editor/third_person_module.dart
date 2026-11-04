@@ -3,8 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:just_game_engine/just_game_engine.dart';
 import 'package:just_editor_core/just_editor_core.dart';
-import 'package:just_game_engine/graphics_3d.dart';
-import 'package:just_game_engine/physics_3d.dart';
+import 'package:just_game_engine/just_game_engine_3d.dart';
 
 import '../third_person_components.dart';
 import 'third_person_aids.dart';
@@ -89,12 +88,12 @@ class ThirdPersonModule extends EditorModule {
       id: 'third_person',
       order: 40,
       of: (e) {
-        if (e.hasComponent<ThirdPersonController>()) return Icons.directions_run;
-        if (e.hasComponent<ThirdPersonCamera>()) return Icons.videocam_outlined;
-        if (e.hasComponent<Pickup3D>()) return Icons.star_outline;
-        if (e.hasComponent<MovingPlatform3D>()) return Icons.swap_horiz;
-        if (e.hasComponent<Checkpoint3D>()) return Icons.flag_outlined;
-        if (e.hasComponent<KillZone3D>()) return Icons.dangerous_outlined;
+        if (e.hasComponent<ThirdPersonControllerComponent>()) return Icons.directions_run;
+        if (e.hasComponent<ThirdPersonCameraComponent>()) return Icons.videocam_outlined;
+        if (e.hasComponent<Pickup3DComponent>()) return Icons.star_outline;
+        if (e.hasComponent<MovingPlatform3DComponent>()) return Icons.swap_horiz;
+        if (e.hasComponent<Checkpoint3DComponent>()) return Icons.flag_outlined;
+        if (e.hasComponent<KillZone3DComponent>()) return Icons.dangerous_outlined;
         return null;
       },
     ),
@@ -104,7 +103,7 @@ class ThirdPersonModule extends EditorModule {
   List<EditorMarker> get markers => [
     const EditorMarker(
       id: 'killZone',
-      components: [KillZone3D],
+      components: [KillZone3DComponent],
       icon: Icons.dangerous_outlined,
       color: Color(0xFFE57373),
     ),
@@ -140,9 +139,9 @@ final class PlatformTravelOverlay extends ViewportOverlay {
       ..color = const Color(0xFF64B5F6)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    for (final e in context.world.query([TransformComponent, MovingPlatform3D])) {
+    for (final e in context.world.query([TransformComponent, MovingPlatform3DComponent])) {
       if (!context.isShown(e) || !context.isSelected(e)) continue;
-      final p = e.getComponent<MovingPlatform3D>()!;
+      final p = e.getComponent<MovingPlatform3DComponent>()!;
       // While authoring the platform rests where it starts.
       final from = e.getComponent<TransformComponent>()!.position;
       final to = from + p.travel;
@@ -168,9 +167,9 @@ abstract final class ThirdPersonPrefabs {
               ModelComponent(model: models.hero),
               AnimationPlayerComponent(clip: 'idle'),
               AnimatorComponent(graphPath: models.heroAnimator),
-              CharacterBody3D(),
-              ThirdPersonController(),
-              ThirdPersonCombat(combosPath: models.heroCombos),
+              CharacterBody3DComponent(),
+              ThirdPersonControllerComponent(),
+              ThirdPersonCombatComponent(combosPath: models.heroCombos),
               InputComponent(),
             ]),
     _prefab('tp_camera', 'Camera Rig', Icons.videocam_outlined, 'A camera circling the Player, turned by the look actions, kept out of walls.',
@@ -184,50 +183,50 @@ abstract final class ThirdPersonPrefabs {
                 farClip: 300,
               ),
               OrbitFollowComponent(distance: 6, pitch: -0.35, pivot: Vector3(0, -1.4, 0), damping: 0.05),
-              ThirdPersonCamera(),
-              CameraCollision3D(),
+              ThirdPersonCameraComponent(),
+              CameraCollision3DComponent(),
             ]),
     _prefab('tp_ground', 'Ground', Icons.landscape_outlined, 'A 40 m square of ground, its top where it is placed.',
         (at) => [
               TransformComponent(position: Vector3.copy(at.position)),
               ModelComponent(model: models.ground),
-              Collider3D(size: Vector3(40, 1, 40), offset: Vector3(0, 0.5, 0)),
+              Collider3DComponent(size: Vector3(40, 1, 40), offset: Vector3(0, 0.5, 0)),
             ]),
     _prefab('tp_block', 'Block', Icons.check_box_outline_blank, 'A 2 m block to stand on.',
         (at) => _box(models.block, at, Vector3(2, 2, 2))),
     _prefab('tp_platform', 'Moving Platform', Icons.swap_horiz, 'A platform that goes 6 m and back, carrying what stands on it.',
         (at) => [
               ..._box(models.platform, at, Vector3(3, 0.4, 3)),
-              RigidBody3D(bodyType: BodyType3D.kinematic),
-              MovingPlatform3D(travel: Vector3(6, 0, 0), speed: 2.5, wait: 1),
+              RigidBody3DComponent(bodyType: Body3DType.kinematic),
+              MovingPlatform3DComponent(travel: Vector3(6, 0, 0), speed: 2.5, wait: 1),
             ]),
     _prefab('tp_light', 'Light', Icons.lightbulb_outline, 'A point light 3 m above the surface.',
         (at) => [
               TransformComponent(position: at.position + Vector3(0, -3, 0)),
-              LightComponent(range: 10),
+              Light3DComponent(range: 10),
             ]),
     _prefab('tp_pickup', 'Coin', Icons.star_outline, 'A coin to collect, a metre above the surface.',
         (at) => [
               TransformComponent(position: at.position + at.normal * 1.0),
               ModelComponent(model: models.coin, castShadows: false),
-              Collider3D(shape: ColliderShape3D.sphere, radius: 0.35),
-              RigidBody3D(bodyType: BodyType3D.kinematic, isSensor: true),
-              Pickup3D(),
+              Collider3DComponent(shape: Collider3DShape.sphere, radius: 0.35),
+              RigidBody3DComponent(bodyType: Body3DType.kinematic, isSensor: true),
+              Pickup3DComponent(),
             ]),
     _prefab('tp_killzone', 'Kill Zone', Icons.dangerous_outlined, 'A pit, water, a crusher: what enters it goes back to its spawn point.',
         (at) => [
               TransformComponent(position: at.position + at.normal * 1.0),
-              Collider3D(size: Vector3(4, 2, 4)),
-              RigidBody3D(bodyType: BodyType3D.static, isSensor: true),
-              KillZone3D(),
+              Collider3DComponent(size: Vector3(4, 2, 4)),
+              RigidBody3DComponent(bodyType: Body3DType.static, isSensor: true),
+              KillZone3DComponent(),
             ]),
     _prefab('tp_checkpoint', 'Checkpoint', Icons.flag_outlined, 'Where the hero comes back after a fall, once reached.',
         (at) => [
               TransformComponent(position: at.position + at.normal * 1.0),
               ModelComponent(model: models.flag),
-              Collider3D(size: Vector3(1.5, 2, 1.5)),
-              RigidBody3D(bodyType: BodyType3D.static, isSensor: true),
-              Checkpoint3D(),
+              Collider3DComponent(size: Vector3(1.5, 2, 1.5)),
+              RigidBody3DComponent(bodyType: Body3DType.static, isSensor: true),
+              Checkpoint3DComponent(),
             ]),
   ];
 
@@ -235,7 +234,7 @@ abstract final class ThirdPersonPrefabs {
   static List<Component> _box(String model, SurfacePoint at, Vector3 size) => [
     TransformComponent(position: at.position + at.normal * (size.y / 2), scale: Vector3.copy(size)),
     ModelComponent(model: model),
-    Collider3D(size: Vector3(1, 1, 1)),
+    Collider3DComponent(size: Vector3(1, 1, 1)),
   ];
 
   static PrefabDefinition _prefab(

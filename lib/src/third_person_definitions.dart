@@ -6,12 +6,12 @@ import 'third_person_components.dart';
 
 /// How the kit's components are saved, loaded and shown: all 3-D, in the
 /// group "Third Person".
-abstract final class ThirdPersonSchemas {
+abstract final class ThirdPersonDefinitions {
   static const String _group = 'Third Person';
   static const Color _accent = Color(0xFF7E57C2);
 
   /// Every one.
-  static List<ComponentSchema> get all => [controller, combat, camera, pickup, movingPlatform, checkpoint, killZone];
+  static List<ComponentDefinition> get all => [controller, combat, camera, pickup, movingPlatform, checkpoint, killZone];
 
   static ComponentHints _hints(String name, String description, IconData icon, Map<String, FieldHint> fields) =>
       ComponentHints(
@@ -31,11 +31,11 @@ abstract final class ThirdPersonSchemas {
         scrub: ScrubHint(step: step, fractionDigits: digits, suffix: suffix),
       );
 
-  /// [ThirdPersonController].
-  static ComponentSchema<ThirdPersonController> get controller => ComponentSchema<ThirdPersonController>(
-    type: 'ThirdPersonController',
+  /// [ThirdPersonControllerComponent].
+  static ComponentDefinition<ThirdPersonControllerComponent> get controller => ComponentDefinition<ThirdPersonControllerComponent>(
+    type: 'ThirdPersonControllerComponent',
     id: 'third_person_controller_3d_8c51a0d2',
-    create: ThirdPersonController.new,
+    create: ThirdPersonControllerComponent.new,
     hints: _hints(
       'Third Person Controller',
       'Moves a character from its input, relative to where the camera looks: walk, sprint, crouch (ducking its body), jump (with coyote time and an optional wind-up), turning to face the way it runs.',
@@ -57,31 +57,31 @@ abstract final class ThirdPersonSchemas {
       },
     ),
     fields: [
-      _decimal<ThirdPersonController>('walkSpeed', (c) => c.walkSpeed, (c, v) => c.walkSpeed = v),
-      _decimal<ThirdPersonController>('sprintSpeed', (c) => c.sprintSpeed, (c, v) => c.sprintSpeed = v),
-      _decimal<ThirdPersonController>('crouchSpeed', (c) => c.crouchSpeed, (c, v) => c.crouchSpeed = v),
-      _decimal<ThirdPersonController>('crouchHeight', (c) => c.crouchHeight, (c, v) => c.crouchHeight = v),
-      _decimal<ThirdPersonController>('acceleration', (c) => c.acceleration, (c, v) => c.acceleration = v),
-      _decimal<ThirdPersonController>('airAcceleration', (c) => c.airAcceleration, (c, v) => c.airAcceleration = v),
-      _decimal<ThirdPersonController>('jumpSpeed', (c) => c.jumpSpeed, (c, v) => c.jumpSpeed = v),
-      _decimal<ThirdPersonController>('jumpDelay', (c) => c.jumpDelay, (c, v) => c.jumpDelay = v),
-      _decimal<ThirdPersonController>('coyoteTime', (c) => c.coyoteTime, (c, v) => c.coyoteTime = v),
-      _decimal<ThirdPersonController>('jumpBuffer', (c) => c.jumpBuffer, (c, v) => c.jumpBuffer = v),
-      _decimal<ThirdPersonController>('turnSpeed', (c) => c.turnSpeed, (c, v) => c.turnSpeed = v),
-      _decimal<ThirdPersonController>('facingOffset', (c) => c.facingOffset, (c, v) => c.facingOffset = v, min: null),
-      _decimal<ThirdPersonController>('fallLimit', (c) => c.fallLimit, (c, v) => c.fallLimit = v),
-      _text<ThirdPersonController>('moveAction', (c) => c.moveAction, (c, v) => c.moveAction = v),
-      _text<ThirdPersonController>('jumpAction', (c) => c.jumpAction, (c, v) => c.jumpAction = v),
-      _text<ThirdPersonController>('sprintAction', (c) => c.sprintAction, (c, v) => c.sprintAction = v),
-      _text<ThirdPersonController>('crouchAction', (c) => c.crouchAction, (c, v) => c.crouchAction = v),
+      _decimal<ThirdPersonControllerComponent>('walkSpeed', (c) => c.walkSpeed, (c, v) => c.walkSpeed = v),
+      _decimal<ThirdPersonControllerComponent>('sprintSpeed', (c) => c.sprintSpeed, (c, v) => c.sprintSpeed = v),
+      _decimal<ThirdPersonControllerComponent>('crouchSpeed', (c) => c.crouchSpeed, (c, v) => c.crouchSpeed = v),
+      _decimal<ThirdPersonControllerComponent>('crouchHeight', (c) => c.crouchHeight, (c, v) => c.crouchHeight = v),
+      _decimal<ThirdPersonControllerComponent>('acceleration', (c) => c.acceleration, (c, v) => c.acceleration = v),
+      _decimal<ThirdPersonControllerComponent>('airAcceleration', (c) => c.airAcceleration, (c, v) => c.airAcceleration = v),
+      _decimal<ThirdPersonControllerComponent>('jumpSpeed', (c) => c.jumpSpeed, (c, v) => c.jumpSpeed = v),
+      _decimal<ThirdPersonControllerComponent>('jumpDelay', (c) => c.jumpDelay, (c, v) => c.jumpDelay = v),
+      _decimal<ThirdPersonControllerComponent>('coyoteTime', (c) => c.coyoteTime, (c, v) => c.coyoteTime = v),
+      _decimal<ThirdPersonControllerComponent>('jumpBuffer', (c) => c.jumpBuffer, (c, v) => c.jumpBuffer = v),
+      _decimal<ThirdPersonControllerComponent>('turnSpeed', (c) => c.turnSpeed, (c, v) => c.turnSpeed = v),
+      _decimal<ThirdPersonControllerComponent>('facingOffset', (c) => c.facingOffset, (c, v) => c.facingOffset = v, min: null),
+      _decimal<ThirdPersonControllerComponent>('fallLimit', (c) => c.fallLimit, (c, v) => c.fallLimit = v),
+      _text<ThirdPersonControllerComponent>('moveAction', (c) => c.moveAction, (c, v) => c.moveAction = v),
+      _text<ThirdPersonControllerComponent>('jumpAction', (c) => c.jumpAction, (c, v) => c.jumpAction = v),
+      _text<ThirdPersonControllerComponent>('sprintAction', (c) => c.sprintAction, (c, v) => c.sprintAction = v),
+      _text<ThirdPersonControllerComponent>('crouchAction', (c) => c.crouchAction, (c, v) => c.crouchAction = v),
     ],
   );
 
-  /// [ThirdPersonCombat].
-  static ComponentSchema<ThirdPersonCombat> get combat => ComponentSchema<ThirdPersonCombat>(
-    type: 'ThirdPersonCombat',
+  /// [ThirdPersonCombatComponent].
+  static ComponentDefinition<ThirdPersonCombatComponent> get combat => ComponentDefinition<ThirdPersonCombatComponent>(
+    type: 'ThirdPersonCombatComponent',
     id: 'third_person_combat_3d_d41e7c25',
-    create: ThirdPersonCombat.new,
+    create: ThirdPersonCombatComponent.new,
     hints: _hints(
       'Third Person Combat',
       'Punch and kick chains from a combo set: a press in a strike\'s combo window chains the next; each blow lands at its hit time.',
@@ -92,25 +92,25 @@ abstract final class ThirdPersonSchemas {
       },
     ),
     fields: [
-      SchemaField(
+      FieldDefinition(
         name: 'combosPath',
         kind: FieldTypes.assetRef,
-        read: (c) => (c as ThirdPersonCombat).combosPath,
-        write: (c, v) => (c as ThirdPersonCombat).combosPath = v as String,
+        read: (c) => (c as ThirdPersonCombatComponent).combosPath,
+        write: (c, v) => (c as ThirdPersonCombatComponent).combosPath = v as String,
       ),
-      _text<ThirdPersonCombat>('punchAction', (c) => c.punchAction, (c, v) => c.punchAction = v),
-      _text<ThirdPersonCombat>('kickAction', (c) => c.kickAction, (c, v) => c.kickAction = v),
-      _text<ThirdPersonCombat>('punchChain', (c) => c.punchChain, (c, v) => c.punchChain = v),
-      _text<ThirdPersonCombat>('kickChain', (c) => c.kickChain, (c, v) => c.kickChain = v),
-      _decimal<ThirdPersonCombat>('guardTime', (c) => c.guardTime, (c, v) => c.guardTime = v),
+      _text<ThirdPersonCombatComponent>('punchAction', (c) => c.punchAction, (c, v) => c.punchAction = v),
+      _text<ThirdPersonCombatComponent>('kickAction', (c) => c.kickAction, (c, v) => c.kickAction = v),
+      _text<ThirdPersonCombatComponent>('punchChain', (c) => c.punchChain, (c, v) => c.punchChain = v),
+      _text<ThirdPersonCombatComponent>('kickChain', (c) => c.kickChain, (c, v) => c.kickChain = v),
+      _decimal<ThirdPersonCombatComponent>('guardTime', (c) => c.guardTime, (c, v) => c.guardTime = v),
     ],
   );
 
-  /// [ThirdPersonCamera].
-  static ComponentSchema<ThirdPersonCamera> get camera => ComponentSchema<ThirdPersonCamera>(
-    type: 'ThirdPersonCamera',
+  /// [ThirdPersonCameraComponent].
+  static ComponentDefinition<ThirdPersonCameraComponent> get camera => ComponentDefinition<ThirdPersonCameraComponent>(
+    type: 'ThirdPersonCameraComponent',
     id: 'third_person_camera_3d_4e2f9b17',
-    create: ThirdPersonCamera.new,
+    create: ThirdPersonCameraComponent.new,
     hints: _hints(
       'Third Person Camera',
       "The player's turn and zoom for an orbit-follow camera: the look actions turn it, the zoom axis moves it in and out.",
@@ -122,18 +122,18 @@ abstract final class ThirdPersonSchemas {
       },
     ),
     fields: [
-      _decimal<ThirdPersonCamera>('sensitivity', (c) => c.sensitivity, (c, v) => c.sensitivity = v),
-      _bool<ThirdPersonCamera>('invertY', (c) => c.invertY, (c, v) => c.invertY = v),
-      _decimal<ThirdPersonCamera>('zoomSpeed', (c) => c.zoomSpeed, (c, v) => c.zoomSpeed = v),
-      _text<ThirdPersonCamera>('zoomAction', (c) => c.zoomAction, (c, v) => c.zoomAction = v),
+      _decimal<ThirdPersonCameraComponent>('sensitivity', (c) => c.sensitivity, (c, v) => c.sensitivity = v),
+      _bool<ThirdPersonCameraComponent>('invertY', (c) => c.invertY, (c, v) => c.invertY = v),
+      _decimal<ThirdPersonCameraComponent>('zoomSpeed', (c) => c.zoomSpeed, (c, v) => c.zoomSpeed = v),
+      _text<ThirdPersonCameraComponent>('zoomAction', (c) => c.zoomAction, (c, v) => c.zoomAction = v),
     ],
   );
 
-  /// [Pickup3D].
-  static ComponentSchema<Pickup3D> get pickup => ComponentSchema<Pickup3D>(
-    type: 'Pickup3D',
+  /// [Pickup3DComponent].
+  static ComponentDefinition<Pickup3DComponent> get pickup => ComponentDefinition<Pickup3DComponent>(
+    type: 'Pickup3DComponent',
     id: 'pickup_3d_b7d03c45',
-    create: Pickup3D.new,
+    create: Pickup3DComponent.new,
     hints: _hints(
       'Pickup 3D',
       'Taken by a player who touches it (give it a sensor collider), counting its value. Spins and bobs.',
@@ -146,23 +146,23 @@ abstract final class ThirdPersonSchemas {
       },
     ),
     fields: [
-      SchemaField(
+      FieldDefinition(
         name: 'value',
         kind: FieldTypes.integer,
-        read: (c) => (c as Pickup3D).value,
-        write: (c, v) => (c as Pickup3D).value = (v as num).toInt(),
+        read: (c) => (c as Pickup3DComponent).value,
+        write: (c, v) => (c as Pickup3DComponent).value = (v as num).toInt(),
       ),
-      _decimal<Pickup3D>('spinSpeed', (c) => c.spinSpeed, (c, v) => c.spinSpeed = v, min: null),
-      _decimal<Pickup3D>('bobHeight', (c) => c.bobHeight, (c, v) => c.bobHeight = v),
-      _decimal<Pickup3D>('bobSpeed', (c) => c.bobSpeed, (c, v) => c.bobSpeed = v, min: null),
+      _decimal<Pickup3DComponent>('spinSpeed', (c) => c.spinSpeed, (c, v) => c.spinSpeed = v, min: null),
+      _decimal<Pickup3DComponent>('bobHeight', (c) => c.bobHeight, (c, v) => c.bobHeight = v),
+      _decimal<Pickup3DComponent>('bobSpeed', (c) => c.bobSpeed, (c, v) => c.bobSpeed = v, min: null),
     ],
   );
 
-  /// [MovingPlatform3D].
-  static ComponentSchema<MovingPlatform3D> get movingPlatform => ComponentSchema<MovingPlatform3D>(
-    type: 'MovingPlatform3D',
+  /// [MovingPlatform3DComponent].
+  static ComponentDefinition<MovingPlatform3DComponent> get movingPlatform => ComponentDefinition<MovingPlatform3DComponent>(
+    type: 'MovingPlatform3DComponent',
     id: 'moving_platform_3d_2a9e61f8',
-    create: MovingPlatform3D.new,
+    create: MovingPlatform3DComponent.new,
     hints: _hints(
       'Moving Platform 3D',
       'Goes to its travel and back (give it a kinematic body); what stands on it rides along.',
@@ -174,22 +174,22 @@ abstract final class ThirdPersonSchemas {
       },
     ),
     fields: [
-      SchemaField(
+      FieldDefinition(
         name: 'travel',
         kind: FieldTypes.vector3,
-        read: (c) => (c as MovingPlatform3D).travel,
-        write: (c, v) => (c as MovingPlatform3D).travel = Vector3.copy(v as Vector3),
+        read: (c) => (c as MovingPlatform3DComponent).travel,
+        write: (c, v) => (c as MovingPlatform3DComponent).travel = Vector3.copy(v as Vector3),
       ),
-      _decimal<MovingPlatform3D>('speed', (c) => c.speed, (c, v) => c.speed = v),
-      _decimal<MovingPlatform3D>('wait', (c) => c.wait, (c, v) => c.wait = v),
+      _decimal<MovingPlatform3DComponent>('speed', (c) => c.speed, (c, v) => c.speed = v),
+      _decimal<MovingPlatform3DComponent>('wait', (c) => c.wait, (c, v) => c.wait = v),
     ],
   );
 
-  /// [Checkpoint3D].
-  static ComponentSchema<Checkpoint3D> get checkpoint => ComponentSchema<Checkpoint3D>(
-    type: 'Checkpoint3D',
+  /// [Checkpoint3DComponent].
+  static ComponentDefinition<Checkpoint3DComponent> get checkpoint => ComponentDefinition<Checkpoint3DComponent>(
+    type: 'Checkpoint3DComponent',
     id: 'checkpoint_3d_6f1c8e93',
-    create: Checkpoint3D.new,
+    create: Checkpoint3DComponent.new,
     hints: _hints(
       'Checkpoint 3D',
       'Reached by a player (give it a sensor collider), it is where the player comes back after a fall.',
@@ -197,20 +197,20 @@ abstract final class ThirdPersonSchemas {
       {'order': const FieldHint(label: 'Order', description: 'An earlier one reached later does not move the spawn back.')},
     ),
     fields: [
-      SchemaField(
+      FieldDefinition(
         name: 'order',
         kind: FieldTypes.integer,
-        read: (c) => (c as Checkpoint3D).order,
-        write: (c, v) => (c as Checkpoint3D).order = (v as num).toInt(),
+        read: (c) => (c as Checkpoint3DComponent).order,
+        write: (c, v) => (c as Checkpoint3DComponent).order = (v as num).toInt(),
       ),
     ],
   );
 
-  /// [KillZone3D].
-  static ComponentSchema<KillZone3D> get killZone => ComponentSchema<KillZone3D>(
-    type: 'KillZone3D',
+  /// [KillZone3DComponent].
+  static ComponentDefinition<KillZone3DComponent> get killZone => ComponentDefinition<KillZone3DComponent>(
+    type: 'KillZone3DComponent',
     id: 'kill_zone_3d_93d4b2a6',
-    create: KillZone3D.new,
+    create: KillZone3DComponent.new,
     hints: _hints(
       'Kill Zone 3D',
       'A player touching it (give it a sensor collider) is sent back to its spawn point.',
@@ -223,12 +223,12 @@ abstract final class ThirdPersonSchemas {
   /// A number field, never below [min] — 0 unless said: a negative speed,
   /// time or turn rate makes no sense here (a negative turn speed spun the
   /// hero forever). Null for none (an angle, a spin's direction).
-  static SchemaField _decimal<T extends Component>(
+  static FieldDefinition _decimal<T extends Component>(
     String name,
     double Function(T c) read,
     void Function(T c, double v) write, {
     double? min = 0,
-  }) => SchemaField(
+  }) => FieldDefinition(
     name: name,
     kind: FieldTypes.decimal,
     read: (c) => read(c as T),
@@ -236,22 +236,22 @@ abstract final class ThirdPersonSchemas {
     min: min,
   );
 
-  static SchemaField _bool<T extends Component>(
+  static FieldDefinition _bool<T extends Component>(
     String name,
     bool Function(T c) read,
     void Function(T c, bool v) write,
-  ) => SchemaField(
+  ) => FieldDefinition(
     name: name,
     kind: FieldTypes.boolean,
     read: (c) => read(c as T),
     write: (c, v) => write(c as T, v as bool),
   );
 
-  static SchemaField _text<T extends Component>(
+  static FieldDefinition _text<T extends Component>(
     String name,
     String Function(T c) read,
     void Function(T c, String v) write,
-  ) => SchemaField(
+  ) => FieldDefinition(
     name: name,
     kind: FieldTypes.text,
     read: (c) => read(c as T),

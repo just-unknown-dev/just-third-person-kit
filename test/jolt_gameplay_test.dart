@@ -6,7 +6,7 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_game_engine/just_game_engine.dart';
-import 'package:just_game_engine/physics_3d.dart';
+import 'package:just_game_engine/just_game_engine_3d.dart';
 import 'package:just_third_person_kit/just_third_person_kit.dart';
 
 const _dt = 1 / 60;
@@ -21,14 +21,14 @@ void main() {
 
   setUp(() {
     if (skip != null) return;
-    final physics = _backend.createWorld(PhysicsWorldSettings3D());
+    final physics = _backend.createWorld(Physics3DWorldSettings());
     world = World()..initialize();
     world
       ..addSystem(Respawn3DSystem())
       ..addSystem(ThirdPersonControllerSystem(cameraYaw: () => 0))
       ..addSystem(MovingPlatform3DSystem())
       ..addSystem(Pickup3DSystem())
-      ..addSystem(PhysicsSystem3D(physics));
+      ..addSystem(Physics3DSystem(physics));
     addTearDown(() {
       world.dispose();
       physics.dispose();
@@ -36,13 +36,13 @@ void main() {
     // A 40 m floor, its top at y = 0 (+Y is down).
     world.createEntityWithComponents([
       TransformComponent(position: Vector3(0, 0.5, 0)),
-      Collider3D(size: Vector3(40, 1, 40)),
+      Collider3DComponent(size: Vector3(40, 1, 40)),
     ], name: 'Floor');
     input = InputComponent();
     hero = world.createEntityWithComponents([
       TransformComponent(position: Vector3(0, 0, 0)),
-      CharacterBody3D(),
-      ThirdPersonController(),
+      CharacterBody3DComponent(),
+      ThirdPersonControllerComponent(),
       input,
     ], name: 'Hero');
   });
@@ -57,7 +57,7 @@ void main() {
 
   test('it settles on the floor and walks forward (+Z with the camera at yaw 0)', () {
     run(30);
-    expect(hero.getComponent<CharacterBody3D>()!.isGrounded, isTrue);
+    expect(hero.getComponent<CharacterBody3DComponent>()!.isGrounded, isTrue);
     input.setVector('move', const Offset(0, -1));
     run(120);
     expect(at().z, greaterThan(6), reason: 'about 4.5 m/s for 2 s, after speeding up');
@@ -74,12 +74,12 @@ void main() {
     }
     expect(highest, lessThan(-1.5), reason: '6.5 m/s up under 9.81 rises about 2 m');
     expect(at().y, closeTo(0, 0.05));
-    expect(hero.getComponent<ThirdPersonController>()!.isJumping, isFalse);
+    expect(hero.getComponent<ThirdPersonControllerComponent>()!.isJumping, isFalse);
   }, skip: skip);
 
   test('it jumps from a crouch, standing up as it goes', () {
-    final control = hero.getComponent<ThirdPersonController>()!;
-    final body = hero.getComponent<CharacterBody3D>()!;
+    final control = hero.getComponent<ThirdPersonControllerComponent>()!;
+    final body = hero.getComponent<CharacterBody3DComponent>()!;
     run(30);
     input.setDown('crouch', true);
     run(10);
@@ -98,7 +98,7 @@ void main() {
   }, skip: skip);
 
   test('with a wind-up it leaves the ground its delay after the press, and comes back down', () {
-    final control = hero.getComponent<ThirdPersonController>()!..jumpDelay = 0.2;
+    final control = hero.getComponent<ThirdPersonControllerComponent>()!..jumpDelay = 0.2;
     var jumps = 0;
     world.events.on<Jumped3DEvent>((_) => jumps++);
     run(30);
@@ -107,7 +107,7 @@ void main() {
     while (steps < 60 && at().y > -0.02) {
       run(1);
       steps++;
-      if (at().y > -0.02) expect(hero.getComponent<CharacterBody3D>()!.isGrounded, isTrue);
+      if (at().y > -0.02) expect(hero.getComponent<CharacterBody3DComponent>()!.isGrounded, isTrue);
     }
     // Pressed at the first step: it springs at the 13th, 12 steps (0.2 s) on.
     expect(steps, 13);
@@ -127,10 +127,10 @@ void main() {
     // (1.8 m), higher than its crouch (1.5 m).
     world.createEntityWithComponents([
       TransformComponent(position: Vector3(0, -1.6 - 0.25, 4)),
-      Collider3D(size: Vector3(4, 0.5, 4)),
+      Collider3DComponent(size: Vector3(4, 0.5, 4)),
     ], name: 'Roof');
-    final control = hero.getComponent<ThirdPersonController>()!;
-    final body = hero.getComponent<CharacterBody3D>()!;
+    final control = hero.getComponent<ThirdPersonControllerComponent>()!;
+    final body = hero.getComponent<CharacterBody3DComponent>()!;
     run(30);
     input.setVector('move', const Offset(0, -1));
     run(90);
@@ -181,7 +181,7 @@ void main() {
       world.createEntityWithComponents([
         // From the floor (y = 0) up to its top.
         TransformComponent(position: Vector3(0, top / 2, 3 + i * 0.5 + 0.25)),
-        Collider3D(size: Vector3(4, -top, 0.5)),
+        Collider3DComponent(size: Vector3(4, -top, 0.5)),
       ]);
     }
     run(30);
@@ -193,7 +193,7 @@ void main() {
     // A ramp rising along +Z from z = 3: turned about X so that ahead is up.
     world.createEntityWithComponents([
       TransformComponent(position: Vector3(0, -4 * math.sin(angle), 3 + 4 * math.cos(angle))),
-      Collider3D(size: Vector3(4, 0.2, 8), rotation: Vector3(angle, 0, 0)),
+      Collider3DComponent(size: Vector3(4, 0.2, 8), rotation: Vector3(angle, 0, 0)),
     ]);
     run(30);
     expect(highestWalking(150), lessThan(-1.2), reason: 'well up the ramp');
@@ -202,9 +202,9 @@ void main() {
   test('a moving platform carries it', () {
     world.createEntityWithComponents([
       TransformComponent(position: Vector3(10, -1, 0)),
-      Collider3D(size: Vector3(3, 0.5, 3)),
-      RigidBody3D(bodyType: BodyType3D.kinematic),
-      MovingPlatform3D(travel: Vector3(0, 0, 6), speed: 2, wait: 0),
+      Collider3DComponent(size: Vector3(3, 0.5, 3)),
+      RigidBody3DComponent(bodyType: Body3DType.kinematic),
+      MovingPlatform3DComponent(travel: Vector3(0, 0, 6), speed: 2, wait: 0),
     ], name: 'Lift');
     at().setValues(10, -1.3, 0);
     run(30);

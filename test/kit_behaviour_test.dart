@@ -10,7 +10,7 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_game_engine/just_game_engine.dart';
-import 'package:just_game_engine/physics_3d.dart';
+import 'package:just_game_engine/just_game_engine_3d.dart';
 import 'package:just_third_person_kit/editor.dart';
 import 'package:just_third_person_kit/just_third_person_kit.dart';
 
@@ -31,7 +31,7 @@ void main() {
     test('stays where it is moved, and as it is turned, while time stands still', () {
       final coin = world.createEntityWithComponents([
         TransformComponent(position: Vector3(0, -1, 3)),
-        Pickup3D(),
+        Pickup3DComponent(),
       ]);
       final t = coin.getComponent<TransformComponent>()!;
       world.update(0);
@@ -49,7 +49,7 @@ void main() {
     test('spins from the way it was placed', () {
       final coin = world.createEntityWithComponents([
         TransformComponent(position: Vector3(0, -1, 3))..setEuler(0, 0.5, 0),
-        Pickup3D(spinSpeed: 2),
+        Pickup3DComponent(spinSpeed: 2),
       ]);
       world.update(0.25);
       expect(coin.getComponent<TransformComponent>()!.eulerY, closeTo(0.5 + 0.5, 1e-6));
@@ -58,8 +58,8 @@ void main() {
 
   group('a respawn', () {
     late Entity hero;
-    late CharacterBody3D body;
-    late ThirdPersonController control;
+    late CharacterBody3DComponent body;
+    late ThirdPersonControllerComponent control;
     late InputComponent input;
     late List<Landed3DEvent> landed;
 
@@ -67,8 +67,8 @@ void main() {
       world
         ..addSystem(ThirdPersonControllerSystem(cameraYaw: () => 0))
         ..addSystem(Respawn3DSystem());
-      body = CharacterBody3D()..groundState = GroundState3D.onGround;
-      control = ThirdPersonController(fallLimit: 10);
+      body = CharacterBody3DComponent()..groundState = Ground3DState.onGround;
+      control = ThirdPersonControllerComponent(fallLimit: 10);
       input = InputComponent();
       hero = world.createEntityWithComponents([TransformComponent(), body, control, input], name: 'Hero');
       landed = [];
@@ -85,7 +85,7 @@ void main() {
     test('after a fall, tells no landing and takes no jump pressed before', () {
       step(); // its spawn point: where it starts
       body
-        ..groundState = GroundState3D.inAir
+        ..groundState = Ground3DState.inAir
         ..velocity.setValues(0, 25, 0);
       step(frames: 3);
       expect(control.fallSpeed, 25);
@@ -94,7 +94,7 @@ void main() {
       step();
       expect(hero.getComponent<TransformComponent>()!.position.y, 0, reason: 'put back');
 
-      body.groundState = GroundState3D.onGround;
+      body.groundState = Ground3DState.onGround;
       step(frames: 3);
       expect(landed, isEmpty, reason: 'coming back is not a landing');
       expect(body.pendingJump, isNull);
@@ -115,15 +115,15 @@ void main() {
     });
 
     test("checkpoint progress goes with the hero's controller", () {
-      final first = world.createEntityWithComponents([TransformComponent(position: Vector3(5, 0, 0)), Checkpoint3D(order: 1)]);
-      final second = world.createEntityWithComponents([TransformComponent(position: Vector3(9, 0, 0)), Checkpoint3D(order: 2)]);
+      final first = world.createEntityWithComponents([TransformComponent(position: Vector3(5, 0, 0)), Checkpoint3DComponent(order: 1)]);
+      final second = world.createEntityWithComponents([TransformComponent(position: Vector3(9, 0, 0)), Checkpoint3DComponent(order: 2)]);
       step();
       world.events.fire(SensorEnter3DEvent(sensor: second, other: hero));
       step();
       expect(control.spawnPoint!.x, 9);
 
       // A play-test stopped: the hero's components are put back fresh.
-      final fresh = ThirdPersonController(fallLimit: 10);
+      final fresh = ThirdPersonControllerComponent(fallLimit: 10);
       hero.addComponent(fresh);
       step();
       world.events.fire(SensorEnter3DEvent(sensor: first, other: hero));
@@ -135,7 +135,7 @@ void main() {
   group('the camera system', () {
     test('makes its look reader when it joins a world and lets it go when it leaves', () {
       final input = InputService();
-      final systems = ThirdPersonKit.systems(input: input, camera: Camera(position: Offset.zero, zoom: 1));
+      final systems = ThirdPersonKit.systems(input: input, camera: OutputCamera(position: Offset.zero, zoom: 1));
       final camera = systems.whereType<ThirdPersonCameraSystem>().single;
       expect(camera.look, isNull, reason: 'a list made only to look at listens to nothing');
 
@@ -154,9 +154,9 @@ void main() {
   test('numbers have floors: a negative turn speed loads as none', () {
     final context = EngineContext(extensions: [ThirdPersonKit.extension]);
     final controller = context.definitions.decode({
-      'type': 'ThirdPersonController',
+      'type': 'ThirdPersonControllerComponent',
       'fields': {'turnSpeed': -5, 'walkSpeed': -1, 'facingOffset': -math.pi},
-    }) as ThirdPersonController;
+    }) as ThirdPersonControllerComponent;
     expect(controller.turnSpeed, 0);
     expect(controller.walkSpeed, 0);
     expect(controller.facingOffset, -math.pi, reason: 'an angle may be negative');
@@ -171,7 +171,7 @@ void main() {
 
   test('the level aids measure as the game does', () {
     expect(ThirdPersonAids.gravityOf(world), ThirdPersonAids.gravity, reason: 'no 3-D physics yet');
-    final controller = ThirdPersonController(fallLimit: 10)..spawnPoint = Vector3(0, -4, 0);
+    final controller = ThirdPersonControllerComponent(fallLimit: 10)..spawnPoint = Vector3(0, -4, 0);
     world.createEntityWithComponents([TransformComponent(position: Vector3(0, -2, 0)), controller]);
     expect(const ThirdPersonAids().killHeight(world), 6, reason: 'from where it is put back');
   });

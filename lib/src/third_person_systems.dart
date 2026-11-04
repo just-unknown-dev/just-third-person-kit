@@ -3,7 +3,7 @@ import 'dart:ui' show Offset;
 
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:just_game_engine/just_game_engine.dart';
-import 'package:just_game_engine/physics_3d.dart';
+import 'package:just_game_engine/just_game_engine_3d.dart';
 
 import 'combo_set.dart';
 import 'third_person_components.dart';
@@ -95,10 +95,10 @@ final class StrikeHit3DEvent extends GameEvent {
   Vector3(math.cos(yaw), 0, -math.sin(yaw)),
 );
 
-/// Moves [ThirdPersonController] characters from their input, relative to
+/// Moves [ThirdPersonControllerComponent] characters from their input, relative to
 /// where the camera looks; before physics, so the step uses it. A crouch
 /// lowers the character's body, and it stands only when the world's
-/// [PhysicsSystem3D] finds nothing above it.
+/// [Physics3DSystem] finds nothing above it.
 class ThirdPersonControllerSystem extends System {
   /// A system reading the camera's yaw from [cameraYaw].
   ThirdPersonControllerSystem({required this.cameraYaw});
@@ -112,8 +112,8 @@ class ThirdPersonControllerSystem extends System {
   @override
   List<Type> get requiredComponents => [
     TransformComponent,
-    CharacterBody3D,
-    ThirdPersonController,
+    CharacterBody3DComponent,
+    ThirdPersonControllerComponent,
     InputComponent,
   ];
 
@@ -127,13 +127,13 @@ class ThirdPersonControllerSystem extends System {
     for (final entity in entities) {
       if (!entity.isActive) continue;
       final transform = entity.getComponent<TransformComponent>()!;
-      final character = entity.getComponent<CharacterBody3D>()!;
-      final c = entity.getComponent<ThirdPersonController>()!;
+      final character = entity.getComponent<CharacterBody3DComponent>()!;
+      final c = entity.getComponent<ThirdPersonControllerComponent>()!;
       final input = entity.getComponent<InputComponent>()!;
       c.spawnPoint ??= Vector3.copy(transform.position);
       // A strike holds it still: no moving, jumping or crouching till it
       // ends.
-      final striking = entity.getComponent<ThirdPersonCombat>()?.isStriking ?? false;
+      final striking = entity.getComponent<ThirdPersonCombatComponent>()?.isStriking ?? false;
 
       // Ground and air time.
       final wasGrounded = c.isGrounded;
@@ -228,7 +228,7 @@ class ThirdPersonControllerSystem extends System {
 
   /// Sends [c]'s [character] up, its body [height] tall at the step's
   /// start, and says so.
-  void _launch(Entity entity, CharacterBody3D character, ThirdPersonController c, double height) {
+  void _launch(Entity entity, CharacterBody3DComponent character, ThirdPersonControllerComponent c, double height) {
     if (character.isGrounded && character.height == height) {
       character.jump(c.jumpSpeed);
     } else {
@@ -247,7 +247,7 @@ class ThirdPersonControllerSystem extends System {
   }
 
   /// Lowers [c]'s [character] to its crouching height.
-  static void _crouch(CharacterBody3D character, ThirdPersonController c) {
+  static void _crouch(CharacterBody3DComponent character, ThirdPersonControllerComponent c) {
     if (c.standingHeight == null && c.crouchHeight < character.height) {
       c.standingHeight = character.height;
       character.height = c.crouchHeight;
@@ -257,7 +257,7 @@ class ThirdPersonControllerSystem extends System {
 
   /// Stands [c]'s [character] up from a crouch, if there is room above it;
   /// whether it stands.
-  bool _standUp(Entity entity, CharacterBody3D character, ThirdPersonController c) {
+  bool _standUp(Entity entity, CharacterBody3DComponent character, ThirdPersonControllerComponent c) {
     if (!c.isCrouching) return true;
     final standing = c.standingHeight;
     if (standing != null) {
@@ -272,7 +272,7 @@ class ThirdPersonControllerSystem extends System {
   /// Whether something is within [rise] metres above [entity]'s
   /// [character]'s head: a sphere a little thinner than it, swept up from
   /// its head. Nothing is, without 3-D physics.
-  bool _blockedAbove(Entity entity, CharacterBody3D character, double rise) {
+  bool _blockedAbove(Entity entity, CharacterBody3DComponent character, double rise) {
     if (rise <= 0) return false;
     final queries = _queries();
     if (queries == null) return false;
@@ -290,14 +290,14 @@ class ThirdPersonControllerSystem extends System {
 
   /// Queries on the world's 3-D physics, or null without it.
   Physics3DQueries? _queries() {
-    final system = world.getSystem<PhysicsSystem3D>();
+    final system = world.getSystem<Physics3DSystem>();
     if (system == null) return null;
     if (_physicsQueries?.system != system) _physicsQueries = Physics3DQueries(system);
     return _physicsQueries;
   }
 }
 
-/// Plays [ThirdPersonCombat] strikes from the punch and kick buttons: a
+/// Plays [ThirdPersonCombatComponent] strikes from the punch and kick buttons: a
 /// press starts its chain; a press of the same button in a strike's combo
 /// window queues the next, which starts as this one ends; a
 /// [StrikeHit3DEvent] says when each blow lands; after the last strike the
@@ -321,7 +321,7 @@ class ThirdPersonCombatSystem extends System {
   int get priority => SystemPriorities.playerControl + 2;
 
   @override
-  List<Type> get requiredComponents => const [ThirdPersonCombat, InputComponent];
+  List<Type> get requiredComponents => const [ThirdPersonCombatComponent, InputComponent];
 
   /// The combo set read from [path], once it has loaded.
   ComboSet? combosAt(String path) => _sets[path.trim()];
@@ -331,14 +331,14 @@ class ThirdPersonCombatSystem extends System {
     if (deltaTime <= 0) return;
     for (final entity in entities) {
       if (!entity.isActive) continue;
-      final combat = entity.getComponent<ThirdPersonCombat>()!;
+      final combat = entity.getComponent<ThirdPersonCombatComponent>()!;
       final combos = _combos(combat.combosPath.trim());
       if (combos == null) continue;
       final input = entity.getComponent<InputComponent>()!;
-      final control = entity.getComponent<ThirdPersonController>();
+      final control = entity.getComponent<ThirdPersonControllerComponent>();
       // On its feet: not in the air (as its body found this step; the
       // controller runs after), in a jump's wind-up or crouched.
-      final grounded = entity.getComponent<CharacterBody3D>()?.isGrounded ?? control?.isGrounded ?? true;
+      final grounded = entity.getComponent<CharacterBody3DComponent>()?.isGrounded ?? control?.isGrounded ?? true;
       final ready = grounded && !(control?.isJumping ?? false) && !(control?.isCrouching ?? false);
       final pressed = input.wasPressed(combat.punchAction)
           ? combat.punchChain
@@ -390,7 +390,7 @@ class ThirdPersonCombatSystem extends System {
 
   /// Starts [strike], the [step]th of [chain], and plays it on the
   /// entity's animator: the trigger of its name.
-  static void _start(Entity entity, ThirdPersonCombat combat, Strike strike, String chain, int step) {
+  static void _start(Entity entity, ThirdPersonCombatComponent combat, Strike strike, String chain, int step) {
     combat
       ..strike = strike
       ..chain = chain
@@ -403,7 +403,7 @@ class ThirdPersonCombatSystem extends System {
   }
 
   /// Ends the strike playing, keeping the guard [guard] seconds.
-  static void _end(Entity entity, ThirdPersonCombat combat, {required double guard}) {
+  static void _end(Entity entity, ThirdPersonCombatComponent combat, {required double guard}) {
     // A trigger no transition took (a graph without the strike) is not
     // left to fire later.
     final name = combat.strike?.name;
@@ -438,12 +438,12 @@ class ThirdPersonCombatSystem extends System {
   Future<ComboSet> _fromBundle(String path) async => ComboSet.parse(await world.context.bundle.loadString(path));
 }
 
-/// Turns and zooms [ThirdPersonCamera] cameras from the look and zoom
+/// Turns and zooms [ThirdPersonCameraComponent] cameras from the look and zoom
 /// actions, once per rendered frame, so the view is smooth at any rate.
 ///
 /// It runs just before the camera brain ([SystemPriorities.camera] + 1), so
 /// a frame's look is in the view that frame is drawn with.
-class ThirdPersonCameraSystem extends System implements FrameSystem {
+class ThirdPersonCameraSystem extends System implements PerFrame {
   /// A system reading looks and zoom through [actions]. Its [look] reader
   /// is made when it joins a world and let go when it leaves.
   ThirdPersonCameraSystem({required this.actions});
@@ -461,7 +461,7 @@ class ThirdPersonCameraSystem extends System implements FrameSystem {
   int get priority => SystemPriorities.camera + 1;
 
   @override
-  List<Type> get requiredComponents => const [OrbitFollowComponent, ThirdPersonCamera];
+  List<Type> get requiredComponents => const [OrbitFollowComponent, ThirdPersonCameraComponent];
 
   @override
   void onAddedToWorld() {
@@ -487,7 +487,7 @@ class ThirdPersonCameraSystem extends System implements FrameSystem {
     for (final entity in entities) {
       if (!entity.isActive) continue;
       final orbit = entity.getComponent<OrbitFollowComponent>()!;
-      final camera = entity.getComponent<ThirdPersonCamera>()!;
+      final camera = entity.getComponent<ThirdPersonCameraComponent>()!;
       applyLook(orbit, camera, turn);
       final zoom = actions.tryAction(camera.zoomAction)?.readAxis() ?? 0;
       if (zoom != 0 && deltaTime > 0) {
@@ -498,7 +498,7 @@ class ThirdPersonCameraSystem extends System implements FrameSystem {
   }
 
   /// [orbit] turned by [turn] (radians: x right, y down) as [camera] says.
-  static void applyLook(OrbitFollowComponent orbit, ThirdPersonCamera camera, Offset turn) {
+  static void applyLook(OrbitFollowComponent orbit, ThirdPersonCameraComponent camera, Offset turn) {
     if (turn == Offset.zero) return;
     orbit.yaw += turn.dx * camera.sensitivity;
     // Down on the look turns the view down: a lower pitch (-Y is up).
@@ -518,7 +518,7 @@ class Pickup3DSystem extends System {
   Pickup3DSystem();
 
   @override
-  List<Type> get requiredComponents => const [TransformComponent, Pickup3D];
+  List<Type> get requiredComponents => const [TransformComponent, Pickup3DComponent];
 
   final List<(Entity, Entity)> _touched = [];
   EventSubscription? _subscription;
@@ -527,8 +527,8 @@ class Pickup3DSystem extends System {
   void onAddedToWorld() {
     super.onAddedToWorld();
     _subscription = world.events.on<SensorEnter3DEvent>((e) {
-      final pickup = e.sensor.getComponent<Pickup3D>();
-      if (pickup != null && !pickup.isCollected && e.other.hasComponent<ThirdPersonController>()) {
+      final pickup = e.sensor.getComponent<Pickup3DComponent>();
+      if (pickup != null && !pickup.isCollected && e.other.hasComponent<ThirdPersonControllerComponent>()) {
         _touched.add((e.sensor, e.other));
       }
     });
@@ -544,7 +544,7 @@ class Pickup3DSystem extends System {
   @override
   void update(double deltaTime) {
     for (final (pickup, collector) in _touched) {
-      final p = pickup.getComponent<Pickup3D>();
+      final p = pickup.getComponent<Pickup3DComponent>();
       if (p == null || p.isCollected || !pickup.isAlive) continue;
       p.collect();
       world.events.fire(PickupCollected3DEvent(pickup, collector, p.value));
@@ -554,7 +554,7 @@ class Pickup3DSystem extends System {
     if (deltaTime <= 0) return;
     for (final entity in entities) {
       if (!entity.isActive) continue;
-      final p = entity.getComponent<Pickup3D>()!;
+      final p = entity.getComponent<Pickup3DComponent>()!;
       final t = entity.getComponent<TransformComponent>()!;
       final home = p.home ??= Vector3.copy(t.position);
       final placed = p.homeRotation ??= _rotationOf(t);
@@ -577,21 +577,21 @@ class Pickup3DSystem extends System {
   static final Quaternion _spin = Quaternion.identity();
 }
 
-/// Moves [MovingPlatform3D] platforms there and back; before physics, so a
+/// Moves [MovingPlatform3DComponent] platforms there and back; before physics, so a
 /// kinematic body moves over the step and carries what stands on it.
 class MovingPlatform3DSystem extends System {
   @override
   int get priority => SystemPriorities.playerControl + 1;
 
   @override
-  List<Type> get requiredComponents => const [TransformComponent, MovingPlatform3D];
+  List<Type> get requiredComponents => const [TransformComponent, MovingPlatform3DComponent];
 
   @override
   void update(double deltaTime) {
     if (deltaTime <= 0) return;
     for (final entity in entities) {
       if (!entity.isActive) continue;
-      final p = entity.getComponent<MovingPlatform3D>()!;
+      final p = entity.getComponent<MovingPlatform3DComponent>()!;
       final t = entity.getComponent<TransformComponent>()!;
       final start = p.start ??= Vector3.copy(t.position);
       final length = p.travel.length;
@@ -616,15 +616,15 @@ class MovingPlatform3DSystem extends System {
   }
 }
 
-/// Checkpoints and falls: a player reaching a [Checkpoint3D] comes back
+/// Checkpoints and falls: a player reaching a [Checkpoint3DComponent] comes back
 /// there; one falling past its controller's fall limit, or touching a
-/// [KillZone3D], is put back at once.
+/// [KillZone3DComponent], is put back at once.
 class Respawn3DSystem extends System {
   @override
   int get priority => SystemPriorities.playerControl - 1;
 
   @override
-  List<Type> get requiredComponents => const [TransformComponent, ThirdPersonController];
+  List<Type> get requiredComponents => const [TransformComponent, ThirdPersonControllerComponent];
 
   final List<(Entity, Entity)> _sensed = [];
   EventSubscription? _subscription;
@@ -633,8 +633,8 @@ class Respawn3DSystem extends System {
   void onAddedToWorld() {
     super.onAddedToWorld();
     _subscription = world.events.on<SensorEnter3DEvent>((e) {
-      if (e.other.hasComponent<ThirdPersonController>() &&
-          (e.sensor.hasComponent<Checkpoint3D>() || e.sensor.hasComponent<KillZone3D>())) {
+      if (e.other.hasComponent<ThirdPersonControllerComponent>() &&
+          (e.sensor.hasComponent<Checkpoint3DComponent>() || e.sensor.hasComponent<KillZone3DComponent>())) {
         _sensed.add((e.sensor, e.other));
       }
     });
@@ -654,9 +654,9 @@ class Respawn3DSystem extends System {
   void update(double deltaTime) {
     final reset = _reset..clear();
     for (final (sensor, player) in _sensed) {
-      final controller = player.getComponent<ThirdPersonController>();
+      final controller = player.getComponent<ThirdPersonControllerComponent>();
       if (controller == null || !player.isAlive) continue;
-      final checkpoint = sensor.getComponent<Checkpoint3D>();
+      final checkpoint = sensor.getComponent<Checkpoint3DComponent>();
       if (checkpoint != null) {
         final best = _best[controller];
         if (best == null || checkpoint.order >= best) {
@@ -674,7 +674,7 @@ class Respawn3DSystem extends System {
     }
     _sensed.clear();
     for (final player in entities) {
-      final c = player.getComponent<ThirdPersonController>()!;
+      final c = player.getComponent<ThirdPersonControllerComponent>()!;
       final t = player.getComponent<TransformComponent>()!;
       final spawn = c.spawnPoint;
       if (spawn == null) continue;
@@ -691,7 +691,7 @@ class Respawn3DSystem extends System {
   /// with nothing of the fall, jump or strike it was in carried over — no
   /// landing is told for the fall, and a jump pressed before is not taken.
   void respawn(Entity player) {
-    final c = player.getComponent<ThirdPersonController>()!;
+    final c = player.getComponent<ThirdPersonControllerComponent>()!;
     final t = player.getComponent<TransformComponent>()!;
     final at = c.spawnPoint;
     if (at == null) return;
@@ -699,7 +699,7 @@ class Respawn3DSystem extends System {
     t.position.setFrom(at);
     t.capturePrevious();
     c.planarVelocity.setZero();
-    final character = player.getComponent<CharacterBody3D>();
+    final character = player.getComponent<CharacterBody3DComponent>();
     if (character != null) {
       character
         ..moveVelocity.setZero()
@@ -716,7 +716,7 @@ class Respawn3DSystem extends System {
       ..sincePressed = double.infinity
       ..airTime = 0
       ..fallSpeed = 0;
-    final combat = player.getComponent<ThirdPersonCombat>();
+    final combat = player.getComponent<ThirdPersonCombatComponent>();
     if (combat != null && combat.inCombat) {
       ThirdPersonCombatSystem._end(player, combat, guard: 0);
     }

@@ -35,14 +35,14 @@ A bug report should have:
 - steps to reproduce, and what you expected instead of what happened;
 - the output of `flutter --version`, and the platform (Android, iOS, Linux, macOS, Windows);
 - if the game stops at start with a `Physics3DUnsupportedError`, its message. It usually means the game's own pubspec does not build Jolt;
-- the scene's `.scene.json`, or the smallest part of it that shows the problem: the hero with its `CharacterBody3D` and `ThirdPersonController` settings, and what it stood on or touched;
-- for a camera bug, the camera's `OrbitFollowComponent` and `ThirdPersonCamera` settings, and whether the look came from a mouse, a drag or a stick;
+- the scene's `.scene.json`, or the smallest part of it that shows the problem: the hero with its `CharacterBody3DComponent` and `ThirdPersonControllerComponent` settings, and what it stood on or touched;
+- for a camera bug, the camera's `OrbitFollowComponent` and `ThirdPersonCameraComponent` settings, and whether the look came from a mouse, a drag or a stick;
 - for an input bug, the actions the kit reads (`move`, `jump`, `sprint`, `zoom`, `look`, `lookStick`) as the game's `.input.json` binds them;
 - for an editor bug, the prefab involved and what you did in the editor.
 
 Bugs often belong somewhere else:
 
-- The kit decides where a character goes; the engine's `CharacterBody3D` does the walking. A slope, step or platform bug you can show without `ThirdPersonController` belongs in [just_game_engine](https://github.com/just-unknown-dev/just-game-engine/issues), and so does the orbit camera's follow and wall collision (`OrbitFollowComponent`, `CameraCollision3D`). Wrong physics with no kit component involved belongs in [just_physics_engine](https://github.com/just-unknown-dev/just-physics-engine/issues), which runs Jolt.
+- The kit decides where a character goes; the engine's `CharacterBody3DComponent` does the walking. A slope, step or platform bug you can show without `ThirdPersonControllerComponent` belongs in [just_game_engine](https://github.com/just-unknown-dev/just-game-engine/issues), and so does the orbit camera's follow and wall collision (`OrbitFollowComponent`, `CameraCollision3DComponent`). Wrong physics with no kit component involved belongs in [just_physics_engine](https://github.com/just-unknown-dev/just-physics-engine/issues), which runs Jolt.
 - A model, light or material that draws wrongly belongs in [just_graphics_engine](https://github.com/just-unknown-dev/just-graphics-engine/issues).
 - Reading the mouse or stick for the look (`LookInput`, `LookActions`) belongs in [just_inputs](https://github.com/just-unknown-dev/just-inputs/issues).
 - An editor bug you can show without `ThirdPersonModule` belongs in `just_game_engine_editor`.
@@ -104,8 +104,8 @@ The third-person template depends on this package. Its game adds `ThirdPersonKit
 | Path | Contents |
 |------|----------|
 | `lib/just_third_person_kit.dart` | The runtime library, safe in a release build |
-| `lib/src/third_person_components.dart` | `ThirdPersonController`, `ThirdPersonCamera`, `Pickup3D`, `MovingPlatform3D`, `Checkpoint3D`, `KillZone3D` |
-| `lib/src/third_person_schemas.dart` | `ThirdPersonSchemas`: how each component is saved, loaded and shown in the inspector |
+| `lib/src/third_person_components.dart` | `ThirdPersonControllerComponent`, `ThirdPersonCameraComponent`, `Pickup3DComponent`, `MovingPlatform3DComponent`, `Checkpoint3DComponent`, `KillZone3DComponent` |
+| `lib/src/third_person_definitions.dart` | `ThirdPersonDefinitions`: how each component is saved, loaded and shown in the inspector |
 | `lib/src/third_person_systems.dart` | `ThirdPersonControllerSystem`, `ThirdPersonCameraSystem`, `Pickup3DSystem`, `MovingPlatform3DSystem`, `Respawn3DSystem`; the events `PickupCollected3DEvent`, `CheckpointReached3DEvent` and `Respawned3DEvent` |
 | `lib/src/third_person_kit.dart` | `ThirdPersonKit`: the extension, the animator bindings and the systems |
 | `lib/editor.dart`, `lib/src/editor/` | Design time only: `ThirdPersonModule`, `ThirdPersonPrefabs`, `ThirdPersonModels`, `PlatformTravelOverlay` |
@@ -114,13 +114,13 @@ The third-person template depends on this package. Its game adds `ThirdPersonKit
 
 A few rules hold the package together. Keep them:
 
-- **The runtime never reaches the editor.** Nothing that `lib/just_third_person_kit.dart` reaches imports `just_game_engine_editor`, `just_graphics_engine` or a file under `lib/src/editor/`. Only the prefabs use models and lights (from `package:just_game_engine/graphics_3d.dart`). `just_store.json` lists `editor.dart` and `src/editor/` as editor-only; keep it in step.
-- **3-D physics comes through the engine.** The kit imports `package:just_game_engine/physics_3d.dart` and never `just_physics_engine` or `just_jolt`. A game turns 3-D physics on with `EngineConfig(physics3D: Physics3D())` and builds Jolt in its own pubspec. The `hooks:` block in this package's pubspec only builds Jolt for its own tests, because a build hook reads only the root package's user-defines.
-- **Every saved component has a `ComponentSchema`** in `ThirdPersonSchemas.all`, with 3-D hints (`Dimensions.threeD`, group "Third Person"), and its type is listed under `runtime.componentTypes` in `just_store.json`. The schemas are getters, so `ThirdPersonKit.extension`, a `RefreshableExtension`, can rebuild them after a hot reload. Write new ones as getters too.
-- **Saved scenes must keep loading.** Never change a schema's `type` or `id`, or a field's name. A new field needs nothing more, because a scene saved without it loads the constructor's default. The kit has no scene migrations; a change that would need one is for an issue first.
+- **The runtime never reaches the editor.** Nothing that `lib/just_third_person_kit.dart` reaches imports `just_game_engine_editor`, `just_graphics_engine` or a file under `lib/src/editor/`. Only the prefabs use models and lights (from `package:just_game_engine/just_game_engine_3d.dart`). `just_store.json` lists `editor.dart` and `src/editor/` as editor-only; keep it in step.
+- **3-D physics comes through the engine.** The kit imports `package:just_game_engine/just_game_engine_3d.dart` and never `just_physics_engine` or `just_jolt`. A game turns 3-D physics on with `EngineConfig(services: [Physics3D()])` and builds Jolt in its own pubspec. The `hooks:` block in this package's pubspec only builds Jolt for its own tests, because a build hook reads only the root package's user-defines.
+- **Every saved component has a `ComponentDefinition`** in `ThirdPersonDefinitions.all`, with 3-D hints (`Dimensions.threeD`, group "Third Person"), and its type is listed under `runtime.componentTypes` in `just_store.json`. The definitions are getters, so `ThirdPersonKit.extension`, a `RefreshableExtension`, can rebuild them after a hot reload. Write new ones as getters too.
+- **Saved scenes must keep loading.** Never change a definition's `type` or `id`, or a field's name. A new field needs nothing more, because a scene saved without it loads the constructor's default. The kit has no scene migrations; a change that would need one is for an issue first.
 - **Only settings are saved.** What the systems keep while the game runs (a pickup's bob, a platform's progress) is private to `third_person_components.dart`. The systems reach it through the `PickupRuntime` and `MovingPlatformRuntime` extensions, which the runtime library hides.
 - **Metres, and up is -Y**, as everywhere in the engine. A glTF character faces its file's +Z, which is the engine's -Z, so `facingOffset` defaults to π.
-- **Gameplay runs at the fixed step, before physics.** `Respawn3DSystem`, `ThirdPersonControllerSystem` and `MovingPlatform3DSystem` run at `SystemPriorities.playerControl` or next to it, so the physics step uses what they set. Only `ThirdPersonCameraSystem` is a `FrameSystem`: it turns the camera once per rendered frame, so the view is smooth at any frame rate. Keep gameplay out of `frame`.
+- **Gameplay runs at the fixed step, before physics.** `Respawn3DSystem`, `ThirdPersonControllerSystem` and `MovingPlatform3DSystem` run at `SystemPriorities.playerControl` or next to it, so the physics step uses what they set. Only `ThirdPersonCameraSystem` is a `PerFrame`: it turns the camera once per rendered frame, so the view is smooth at any frame rate. Keep gameplay out of `frame`.
 
 ---
 
@@ -140,7 +140,7 @@ flutter test test/third_person_test.dart
 
 **Jolt.** `test/jolt_gameplay_test.dart` runs the gameplay on real Jolt physics: walking, jumping, stairs, a slope, a moving platform and a respawn. Where Jolt is not available, each of its tests is skipped with the reason `JoltPhysicsEngine().unavailableReason` gives. Say in your pull request if they were skipped for you.
 
-**Writing tests.** There is no shared helper library. For a system's logic, follow `test/third_person_test.dart`: a bare `World` with only the system under test, the character's ground state set by hand (`CharacterBody3D()..groundState = GroundState3D.onGround`), and sensor events fired straight at the world's events (`world.events.fire(SensorEnter3DEvent(...))`). Step it with `world.update(1 / 60)`, and drive the hero through its `InputComponent` (`setVector('move', …)`, `pressed.add('jump')`), clearing `pressed` after each step. Use real Jolt, as `test/jolt_gameplay_test.dart` does, only for what needs real collisions.
+**Writing tests.** There is no shared helper library. For a system's logic, follow `test/third_person_test.dart`: a bare `World` with only the system under test, the character's ground state set by hand (`CharacterBody3DComponent()..groundState = Ground3DState.onGround`), and sensor events fired straight at the world's events (`world.events.fire(SensorEnter3DEvent(...))`). Step it with `world.update(1 / 60)`, and drive the hero through its `InputComponent` (`setVector('move', …)`, `pressed.add('jump')`), clearing `pressed` after each step. Use real Jolt, as `test/jolt_gameplay_test.dart` does, only for what needs real collisions.
 
 ---
 
@@ -194,7 +194,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 | `test` | Adding or updating tests |
 | `chore` | Build process, tooling, dependencies |
 
-Use the area as the scope: `components`, `schemas`, `systems`, `kit` or `editor`. Mark a change that breaks the public API or how scenes are saved with `!` and a `BREAKING CHANGE:` footer.
+Use the area as the scope: `components`, `definitions`, `systems`, `kit` or `editor`. Mark a change that breaks the public API or how scenes are saved with `!` and a `BREAKING CHANGE:` footer.
 
 **Examples:**
 ```

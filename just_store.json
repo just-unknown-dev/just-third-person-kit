@@ -34,13 +34,13 @@
   },
   "runtime": {
     "componentTypes": [
-      "Checkpoint3D",
-      "KillZone3D",
-      "MovingPlatform3D",
-      "Pickup3D",
-      "ThirdPersonCamera",
-      "ThirdPersonCombat",
-      "ThirdPersonController"
+      "Checkpoint3DComponent",
+      "KillZone3DComponent",
+      "MovingPlatform3DComponent",
+      "Pickup3DComponent",
+      "ThirdPersonCameraComponent",
+      "ThirdPersonCombatComponent",
+      "ThirdPersonControllerComponent"
     ],
     "extensions": [
       {
@@ -51,7 +51,7 @@
     ],
     "setup": {
       "file": "lib/game/third_person_game.dart",
-      "snippet": "// The kit's characters are 3-D: EngineConfig(graphics3D: Graphics3D(),\n// physics3D: Physics3D()),\n// with Jolt built (pubspec: hooks: user_defines: just_jolt: build: true).\nThirdPersonKit.registerSystems(\n  engine.world,\n  input: engine.input,\n  camera: engine.cameraSystem.mainCamera,\n);"
+      "snippet": "// The kit's characters are 3-D: EngineConfig(services: [Graphics3D(),\n// Physics3D()]),\n// with Jolt built (pubspec: hooks: user_defines: just_jolt: build: true).\nThirdPersonKit.registerSystems(\n  engine.world,\n  input: engine.input,\n  camera: engine.camera.mainCamera,\n);"
     }
   },
   "schema": 1,

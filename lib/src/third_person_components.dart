@@ -7,15 +7,15 @@ import 'combo_set.dart';
 /// A third-person hero: moved by the `move` action relative to where the
 /// camera looks, jumping with `jump` (with coyote time and a buffered
 /// press, and an optional wind-up), crouching while `crouch` is held —
-/// its body lowered to [ThirdPersonController.crouchHeight], so it fits
+/// its body lowered to [ThirdPersonControllerComponent.crouchHeight], so it fits
 /// under what it could not walk under standing — turning to face the way it
 /// runs. Goes on an entity with a
-/// `CharacterBody3D` (`package:just_game_engine/physics_3d.dart`) and an `InputComponent`; the
+/// `CharacterBody3DComponent` (`package:just_game_engine/just_game_engine_3d.dart`) and an `InputComponent`; the
 /// character does the walking — slopes, steps, platforms — this decides
 /// where to.
-class ThirdPersonController extends Component {
+class ThirdPersonControllerComponent extends Component {
   /// A controller; the defaults suit a person-sized character in metres.
-  ThirdPersonController({
+  ThirdPersonControllerComponent({
     this.walkSpeed = 4.5,
     this.sprintSpeed = 7.5,
     this.crouchSpeed = 1.0,
@@ -145,12 +145,12 @@ class ThirdPersonController extends Component {
 /// start on the ground, not crouched or jumping, and hold it still while
 /// they last. A `StrikeHit3DEvent` says when each blow lands.
 ///
-/// Goes on a hero with a [ThirdPersonController] and an `InputComponent`;
+/// Goes on a hero with a [ThirdPersonControllerComponent] and an `InputComponent`;
 /// an animator graph plays each strike on the trigger of its name, and
 /// reads `striking` and `inCombat`.
-class ThirdPersonCombat extends Component {
+class ThirdPersonCombatComponent extends Component {
   /// Combat from the strikes in [combosPath]; none while it is empty.
-  ThirdPersonCombat({
+  ThirdPersonCombatComponent({
     this.combosPath = '',
     this.punchAction = 'punch',
     this.kickAction = 'kick',
@@ -212,9 +212,9 @@ class ThirdPersonCombat extends Component {
 /// A third-person camera's player controls: on a virtual camera with an
 /// `OrbitFollowComponent`, turned by the look actions (`look`, the mouse or
 /// a drag; `lookStick`, a stick) and zoomed by the `zoom` axis.
-class ThirdPersonCamera extends Component {
+class ThirdPersonCameraComponent extends Component {
   /// Camera controls.
-  ThirdPersonCamera({
+  ThirdPersonCameraComponent({
     this.sensitivity = 1,
     this.invertY = false,
     this.zoomSpeed = 1.5,
@@ -238,9 +238,9 @@ class ThirdPersonCamera extends Component {
 /// Something to collect: a sensor that, touched by a player, disappears and
 /// counts [value]. It spins (about the up axis, from the way it was placed)
 /// and bobs to be seen, while the game runs.
-class Pickup3D extends Component {
+class Pickup3DComponent extends Component {
   /// A pickup worth [value].
-  Pickup3D({this.value = 1, this.spinSpeed = 2, this.bobHeight = 0.15, this.bobSpeed = 2});
+  Pickup3DComponent({this.value = 1, this.spinSpeed = 2, this.bobHeight = 0.15, this.bobSpeed = 2});
 
   /// What it is worth.
   int value;
@@ -267,9 +267,9 @@ class Pickup3D extends Component {
 /// A platform that moves to [travel] from where it starts and back, at
 /// [speed], resting [wait] seconds at each end. A kinematic body: characters
 /// standing on it ride along.
-class MovingPlatform3D extends Component {
+class MovingPlatform3DComponent extends Component {
   /// A platform going [travel] metres and back.
-  MovingPlatform3D({Vector3? travel, this.speed = 2, this.wait = 0.5})
+  MovingPlatform3DComponent({Vector3? travel, this.speed = 2, this.wait = 0.5})
     : travel = travel ?? Vector3(4, 0, 0);
 
   /// Where it goes, from where it starts.
@@ -290,9 +290,9 @@ class MovingPlatform3D extends Component {
 
 /// A checkpoint: a sensor that, reached by a player, becomes where it comes
 /// back after a fall.
-class Checkpoint3D extends Component {
+class Checkpoint3DComponent extends Component {
   /// A checkpoint; [order] lets a later one not be undone by an earlier.
-  Checkpoint3D({this.order = 0});
+  Checkpoint3DComponent({this.order = 0});
 
   /// Its place in the level: one with a lower order reached after a higher
   /// one does not move the spawn back.
@@ -304,13 +304,13 @@ class Checkpoint3D extends Component {
 
 /// A sensor that sends a player back to its spawn point: water, a pit, a
 /// crusher.
-class KillZone3D extends Component {
+class KillZone3DComponent extends Component {
   /// A kill zone.
-  KillZone3D();
+  KillZone3DComponent();
 }
 
 /// Internal access for the kit's systems.
-extension PickupRuntime on Pickup3D {
+extension PickupRuntime on Pickup3DComponent {
   /// Where it bobs about.
   Vector3? get home => _home;
   set home(Vector3? v) => _home = v;
@@ -328,7 +328,7 @@ extension PickupRuntime on Pickup3D {
 }
 
 /// Internal access for the kit's systems.
-extension MovingPlatformRuntime on MovingPlatform3D {
+extension MovingPlatformRuntime on MovingPlatform3DComponent {
   /// Where it started.
   Vector3? get start => _start;
   set start(Vector3? v) => _start = v;

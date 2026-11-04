@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Requires just_game_engine ^2.0.0-dev.4.
+- Installing the kit installs the engine's built-in components (`BuiltInComponents.extension`) too: its levels use them.
+- **Breaking**: every component's name ends in `Component`: `ThirdPersonControllerComponent`, `ThirdPersonCombatComponent`, `ThirdPersonCameraComponent`, `Pickup3DComponent`, `MovingPlatform3DComponent`, `Checkpoint3DComponent` and `KillZone3DComponent`. Levels saved before are renamed as they load (`ThirdPersonKit.renamedTypes`).
+- **Breaking**: `ThirdPersonSchemas` is `ThirdPersonDefinitions` (file `third_person_definitions.dart`; was `third_person_schemas.dart`), and its components' definitions are `ComponentDefinition`s, now that the engine has folded `ComponentSchema` into it.
+
 ## 0.1.0-beta.1
 
 First version: third-person gameplay for just_game_engine in 3D.

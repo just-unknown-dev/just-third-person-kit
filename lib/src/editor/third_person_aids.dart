@@ -3,13 +3,12 @@ import 'dart:ui';
 
 import 'package:just_game_engine/just_game_engine.dart';
 import 'package:just_editor_core/just_editor_core.dart';
-import 'package:just_game_engine/graphics_3d.dart';
-import 'package:just_game_engine/physics_3d.dart';
+import 'package:just_game_engine/just_game_engine_3d.dart';
 
 import '../third_person_components.dart';
 
 /// What the third-person kit knows of how its levels are played: its
-/// hero's jump (from its [ThirdPersonController] and [CharacterBody3D], or
+/// hero's jump (from its [ThirdPersonControllerComponent] and [CharacterBody3DComponent], or
 /// the Player prefab's when the level has no hero yet), the height its
 /// fall limit puts back at, and playing from a point.
 final class ThirdPersonAids extends LevelAids {
@@ -22,17 +21,17 @@ final class ThirdPersonAids extends LevelAids {
   /// How hard [world]'s 3-D physics pulls down (m/s²): its own gravity once
   /// it has a physics world, [gravity] before.
   static double gravityOf(World world) {
-    final system = world.getSystem<PhysicsSystem3D>();
+    final system = world.getSystem<Physics3DSystem>();
     if (system == null || !system.hasWorld) return gravity;
     final g = system.physics.gravity;
     // +Y is down.
     return g.y > 0 ? g.y : g.length;
   }
 
-  /// The level's hero: the entity with a [ThirdPersonController].
+  /// The level's hero: the entity with a [ThirdPersonControllerComponent].
   static Entity? heroOf(World world) {
     for (final e in world.entities) {
-      if (e.isAlive && e.hasComponent<ThirdPersonController>()) return e;
+      if (e.isAlive && e.hasComponent<ThirdPersonControllerComponent>()) return e;
     }
     return null;
   }
@@ -40,8 +39,8 @@ final class ThirdPersonAids extends LevelAids {
   @override
   MovementProfile movementOf(World world) {
     final hero = heroOf(world);
-    final controller = hero?.getComponent<ThirdPersonController>() ?? ThirdPersonController();
-    final body = hero?.getComponent<CharacterBody3D>() ?? CharacterBody3D();
+    final controller = hero?.getComponent<ThirdPersonControllerComponent>() ?? ThirdPersonControllerComponent();
+    final body = hero?.getComponent<CharacterBody3DComponent>() ?? CharacterBody3DComponent();
     return MovementProfile(
       jumpSpeed: controller.jumpSpeed,
       gravity: gravityOf(world) * (body.useGravity ? body.gravityScale : 0),
@@ -54,7 +53,7 @@ final class ThirdPersonAids extends LevelAids {
   @override
   double? killHeight(World world) {
     final hero = heroOf(world);
-    final controller = hero?.getComponent<ThirdPersonController>();
+    final controller = hero?.getComponent<ThirdPersonControllerComponent>();
     if (controller == null) return null;
     // Measured as `Respawn3DSystem` measures it, from where the hero is put
     // back: its spawn point once it has one (in play); else the level's
@@ -93,7 +92,7 @@ final class JumpReachOverlay extends ViewportOverlay {
   @override
   void paint(ViewportOverlayContext context) {
     final selected = context.scope.sceneState.selectedEntity.value;
-    if (selected == null || !selected.isAlive || selected.hasComponent<ThirdPersonController>()) return;
+    if (selected == null || !selected.isAlive || selected.hasComponent<ThirdPersonControllerComponent>()) return;
     final box = Aabb3();
     if (!RayEntityPicker.boundsOf(selected, box)) return;
     final move = const ThirdPersonAids().movementOf(context.world);
@@ -153,18 +152,18 @@ final class WalkableSlopeOverlay extends ViewportOverlay {
   @override
   void paint(ViewportOverlayContext context) {
     final selected = context.scope.sceneState.selectedEntity.value;
-    final shape = selected?.getComponent<Primitive3D>();
+    final shape = selected?.getComponent<Primitive3DComponent>();
     final t = selected?.getComponent<TransformComponent>();
     if (selected == null || t == null) return;
     final (rise, run) = switch (shape) {
-      Ramp3D s => (s.height * t.scale.y.abs(), s.depth * t.scale.z.abs()),
-      Stairs3D s => (s.height * t.scale.y.abs(), s.depth * t.scale.z.abs()),
+      Ramp3DComponent s => (s.height * t.scale.y.abs(), s.depth * t.scale.z.abs()),
+      Stairs3DComponent s => (s.height * t.scale.y.abs(), s.depth * t.scale.z.abs()),
       _ => (0.0, 0.0),
     };
     if (run <= 0) return;
     final degrees = math.atan2(rise, run) * 180 / math.pi;
     final move = const ThirdPersonAids().movementOf(context.world);
-    final walkable = shape is Stairs3D
+    final walkable = shape is Stairs3DComponent
         ? rise / math.max(1, (shape).steps) <= move.stepHeight
         : degrees <= move.maxSlopeDegrees;
     final at = context.project(t.position);
@@ -172,7 +171,7 @@ final class WalkableSlopeOverlay extends ViewportOverlay {
     _label(
       context.canvas,
       at + const Offset(10, 10),
-      shape is Stairs3D
+      shape is Stairs3DComponent
           ? (walkable ? 'Steps walkable' : 'Steps too high to walk up')
           : '${degrees.round()}° ${walkable ? 'walkable' : 'too steep'}',
       walkable ? const Color(0xFF81C784) : const Color(0xFFE57373),
