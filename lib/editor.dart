@@ -3,13 +3,12 @@
 /// platforms' travel.
 ///
 /// Kept out of `just_third_person_kit.dart` so the runtime library carries
-/// no dependency on `just_game_engine_editor`. Import this only from a
-/// debug entry point.
+/// no dependency on `just_editor_core`, the editor's module contract.
+/// Import this only from a debug entry point.
 ///
 /// ```dart
-/// JustGameEditorPlugin.register(engine: engine, modules: [ThirdPersonModule()]);
+/// await JustGameEditorPlugin.register(engine: engine, modules: [ThirdPersonModule()]);
 /// ```
 library;
 
-export 'src/editor/third_person_aids.dart';
-export 'src/editor/third_person_module.dart';
+export 'src/editor/editor.dart';

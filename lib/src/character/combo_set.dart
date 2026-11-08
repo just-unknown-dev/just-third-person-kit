@@ -63,7 +63,10 @@ final class Strike {
       duration: (json['duration'] as num?)?.toDouble() ?? 0,
       hit: (json['hit'] as num?)?.toDouble() ?? 0,
       comboWindow: window is List && window.length == 2
-          ? (open: (window[0] as num).toDouble(), close: (window[1] as num).toDouble())
+          ? (
+              open: (window[0] as num).toDouble(),
+              close: (window[1] as num).toDouble(),
+            )
           : null,
       next: json['next'] as String?,
       then: json['then'] as String? ?? '',
@@ -78,7 +81,11 @@ final class Strike {
 /// a strike's combo window goes on to its `next`.
 final class ComboSet {
   /// [strikes] by name, [chains] of their names, ending in [guard].
-  const ComboSet({this.guard = '', this.chains = const {}, this.strikes = const {}});
+  const ComboSet({
+    this.guard = '',
+    this.chains = const {},
+    this.strikes = const {},
+  });
 
   /// The clip strikes start from and end in: the guard stance.
   final String guard;
@@ -102,21 +109,36 @@ final class ComboSet {
     for (final MapEntry(key: chain, value: names) in chains.entries) {
       if (names.isEmpty) problems.add('Chain "$chain" has no strikes.');
       for (final name in names) {
-        if (!strikes.containsKey(name)) problems.add('Chain "$chain" names "$name", which is not a strike.');
+        if (!strikes.containsKey(name)) {
+          problems.add('Chain "$chain" names "$name", which is not a strike.');
+        }
       }
     }
     for (final s in strikes.values) {
       if (s.duration <= 0) problems.add('Strike "${s.name}" has no duration.');
-      if (s.hit < 0 || s.hit > s.duration) problems.add('Strike "${s.name}" lands outside its duration.');
+      if (s.hit < 0 || s.hit > s.duration) {
+        problems.add('Strike "${s.name}" lands outside its duration.');
+      }
       final next = s.next;
       if (next != null && !strikes.containsKey(next)) {
-        problems.add('Strike "${s.name}" goes on to "$next", which is not a strike.');
+        problems.add(
+          'Strike "${s.name}" goes on to "$next", which is not a strike.',
+        );
       }
       final window = s.comboWindow;
-      if (window != null && (window.open > window.close || window.open < 0 || window.close > s.duration)) {
-        problems.add('Strike "${s.name}" has a combo window outside its duration.');
+      if (window != null &&
+          (window.open > window.close ||
+              window.open < 0 ||
+              window.close > s.duration)) {
+        problems.add(
+          'Strike "${s.name}" has a combo window outside its duration.',
+        );
       }
-      if (next != null && window == null) problems.add('Strike "${s.name}" goes on to "$next" but has no combo window.');
+      if (next != null && window == null) {
+        problems.add(
+          'Strike "${s.name}" goes on to "$next" but has no combo window.',
+        );
+      }
     }
     return problems;
   }
@@ -136,12 +158,16 @@ final class ComboSet {
   factory ComboSet._fromJson(Map<String, dynamic> json) => ComboSet(
     guard: json['guard'] as String? ?? '',
     chains: {
-      for (final MapEntry(:key, :value) in ((json['chains'] as Map?) ?? const {}).entries)
-        if (value is List) key as String: [for (final name in value) name as String],
+      for (final MapEntry(:key, :value)
+          in ((json['chains'] as Map?) ?? const {}).entries)
+        if (value is List)
+          key as String: [for (final name in value) name as String],
     },
     strikes: {
-      for (final MapEntry(:key, :value) in ((json['strikes'] as Map?) ?? const {}).entries)
-        if (value is Map) key as String: Strike.fromJson(key, value.cast<String, dynamic>()),
+      for (final MapEntry(:key, :value)
+          in ((json['strikes'] as Map?) ?? const {}).entries)
+        if (value is Map)
+          key as String: Strike.fromJson(key, value.cast<String, dynamic>()),
     },
   );
 
@@ -149,7 +175,9 @@ final class ComboSet {
   /// does. Throws a [FormatException] when it is not a JSON object.
   factory ComboSet.parse(String source) {
     final json = jsonDecode(source);
-    if (json is! Map<String, dynamic>) throw FormatException('A combo set is a JSON object.', source);
+    if (json is! Map<String, dynamic>) {
+      throw FormatException('A combo set is a JSON object.', source);
+    }
     return ComboSet.fromJson(json);
   }
 }

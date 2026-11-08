@@ -1,11 +1,43 @@
 # Changelog
 
-## Unreleased
+## 0.2.0-beta.1
 
-- Requires just_game_engine ^2.0.0-dev.4.
+### Breaking
+
+- Every component's name ends in `Component` (old → new): `ThirdPersonController` → `ThirdPersonControllerComponent`, `ThirdPersonCombat` → `ThirdPersonCombatComponent`, `ThirdPersonCamera` → `ThirdPersonCameraComponent`, `Pickup3D` → `Pickup3DComponent`, `MovingPlatform3D` → `MovingPlatform3DComponent`, `Checkpoint3D` → `Checkpoint3DComponent`, `KillZone3D` → `KillZone3DComponent`. Levels saved with the old names are renamed as they load, at any scene format (`ThirdPersonMigrations.renamedTypes`).
+- `ThirdPersonSchemas` → `ThirdPersonDefinitions` (file `third_person_definitions.dart`; was `third_person_schemas.dart`), and its components' definitions are `ComponentDefinition`s, now that the engine has folded `ComponentSchema` into it.
+- The events take the engine's words for the same things: `CheckpointReached3DEvent` → `CheckpointActivated3DEvent`, `Respawned3DEvent` → `PlayerRespawn3DEvent`. Their fields are unchanged.
+- `ThirdPersonKit.renamedTypes` → `ThirdPersonMigrations.renamedTypes`, as the other kits have it.
+- `ThirdPersonControllerComponent.standingHeight` is gone: the crouch lowers the body through `CharacterBody3DComponent.heightOverride` (just_game_engine 2.0.0), and the standing height is the body's own `height`.
+- `lib/src/` is laid out by feature: `character/`, `camera/`, `level/`, `kit/` and `editor/`, one barrel each. Import only `package:just_third_person_kit/just_third_person_kit.dart` and `package:just_third_person_kit/editor.dart`; every `src/` path has moved.
+- The fall limit is measured from the lowest spawn point the hero has had, no longer from its last checkpoint (see Fixed).
+
+### Added
+
+- `ThirdPersonMigrations`: `renamedTypes` and `install(context)`, which `ThirdPersonKit.extension` calls.
+- `ThirdPersonControllerComponent.lowestSpawnY` and `killHeight` (run time, not saved): the height a fall puts the hero back from.
+- `ThirdPersonCameraSystem.applyZoom`, beside `applyLook`.
+- Tests mirror `lib/src/` (`test/character/`, `test/camera/`, `test/level/`, `test/kit/`, `test/editor/`). `test/library_layout_test.dart` guards the layout, the layers (`character`, `camera` → `level` → `kit` → `editor`) and the release split; `test/store_manifest_test.dart` checks `just_store.json` against the pubspec, the CHANGELOG and the definitions.
+
+### Changed
+
+- Requires just_game_engine ^2.0.0 and just_editor_core ^0.1.0. `just_store.json` asks for the same engine (`^2.0.0`; it asked for `^2.0.0-dev.2`, older than the kit needs) and for just_game_engine_editor ^0.1.0.
 - Installing the kit installs the engine's built-in components (`BuiltInComponents.extension`) too: its levels use them.
-- **Breaking**: every component's name ends in `Component`: `ThirdPersonControllerComponent`, `ThirdPersonCombatComponent`, `ThirdPersonCameraComponent`, `Pickup3DComponent`, `MovingPlatform3DComponent`, `Checkpoint3DComponent` and `KillZone3DComponent`. Levels saved before are renamed as they load (`ThirdPersonKit.renamedTypes`).
-- **Breaking**: `ThirdPersonSchemas` is `ThirdPersonDefinitions` (file `third_person_definitions.dart`; was `third_person_schemas.dart`), and its components' definitions are `ComponentDefinition`s, now that the engine has folded `ComponentSchema` into it.
+- The editor half is one file per class, as named: `ThirdPersonModule`, `ThirdPersonModels`, `ThirdPersonPrefabs` and `ThirdPersonAids`, with the three overlays (`PlatformTravelOverlay`, `JumpReachOverlay`, `WalkableSlopeOverlay`) together in `third_person_overlays.dart`.
+- The level aids' kill height is measured as a respawn measures it, from the lowest spawn point.
+- The source is formatted with `dart format`.
+- The controller's `moveAction`, `jumpAction`, `sprintAction` and `crouchAction`, the combat's `punchAction` and `kickAction`, and the camera's `zoomAction` are input action fields (just_game_engine's `InputDefinitions.actionType`; they were text): the editor's inspector offers the project's actions for them, and the Input Actions editor finds them when an action is renamed, moved or deleted. They save and load as before. The combat's `punchChain` and `kickChain` name chains in the combo set and stay text.
+
+### Fixed
+
+- A checkpoint more than `fallLimit` (40 m) above the ground made that ground deadly: the limit was measured from the moving spawn point, so walking down from a high checkpoint respawned the hero there, every time. It is now measured from the lowest spawn point the hero has had (where it started, or the lowest checkpoint reached), so it never rises with a checkpoint.
+- The camera's look turned the orbit while time stood still (an editor authoring the level, a pause), writing the rig's saved `yaw` and `pitch`. `ThirdPersonCameraSystem` now stands still with the other systems, and drops the look made meanwhile instead of turning by it all at once later.
+- The `ThirdPersonKit` sample used `EngineConfig(graphics3D:, physics3D:)`, which does not exist: it is `services: [Graphics3D(), Physics3D()]`. `editor.dart` said the runtime avoided `just_game_engine_editor`; the editor half builds on `just_editor_core`.
+- The crouch wrote the character body's saved `height` at run time, so a world saved mid-crouch kept the crouching height. It now sets the body's run-time `heightOverride` and clears it on standing up and on respawn; the saved `height` never changes.
+
+### Removed
+
+- The `PickupRuntime` and `MovingPlatformRuntime` extensions, which the runtime library hid: what the systems keep is now `@internal` on `Pickup3DComponent` (`home`, `homeRotation`, `time`, `collect()`) and `MovingPlatform3DComponent` (`start`, `along`, `direction`, `resting`).
 
 ## 0.1.0-beta.1
 

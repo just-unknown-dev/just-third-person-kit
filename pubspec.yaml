@@ -1,6 +1,6 @@
 name: just_third_person_kit
 description: "Third-person gameplay for just_game_engine in 3D: a camera-relative character controller with coyote time and jump buffering, an orbit camera turned by look input, pickups, moving platforms, checkpoints and respawns."
-version: 0.1.0-beta.1
+version: 0.2.0-beta.1
 publish_to: none
 homepage: https://engine.justunknown.com/
 
@@ -15,18 +15,21 @@ dependencies:
     sdk: flutter
   # The engine, and its 3-D physics: the character it moves
   # (CharacterBody3DComponent) and the sensors it listens to.
-  just_game_engine: ^2.0.0-dev.4
+  just_game_engine: ^2.0.0
   # Design-time only: `lib/editor.dart` and `lib/src/editor/` (prefabs with
   # models and lights). The runtime library never imports them, so a
   # release build never reaches the editor — the kits' arrangement.
-  just_editor_core: ^0.1.0-dev.1
+  just_editor_core: ^0.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
 
-# The gameplay tests run on Jolt (test/jolt_gameplay_test.dart).
+# The gameplay tests run on Jolt (test/kit/jolt_gameplay_test.dart). A build
+# hook reads only the root package's user-defines, so this builds Jolt for
+# the kit's own tests alone: a game sets the same block in its own pubspec
+# (just_store.json's setup says so).
 hooks:
   user_defines:
     just_jolt:
